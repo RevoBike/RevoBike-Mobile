@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
+import 'package:revobike/presentation/screens/stations/StationDetails.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -42,44 +43,88 @@ class _MapScreenState extends State<MapScreen> {
             markers: createMarker(),
           ),
           Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(1),
+                    Colors.white.withOpacity(0.8),
+                    Colors.white.withOpacity(0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
             top: 40,
             left: 10,
             right: 10,
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withOpacity(0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                      suffixIcon: SvgPicture.asset(
-                        "assets/icons/search.svg",
-                        color: Colors.grey,
-                      ),
+                  child: const CircleAvatar(
+                    maxRadius: 25,
+                    backgroundColor: Colors.white,
+                    backgroundImage: AssetImage(
+                      "assets/images/img.png"
                     ),
-                  ),
+                  )
                 ),
-                const SizedBox(width: 10),
+                const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          FontAwesomeIcons.locationArrow,
+                          color: Colors.blueAccent,
+                          size: 15,
+                        ),
+                        SizedBox(width: 5),
+                        Text(
+                          "Your Location",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black45
+                          )
+                        ),
+                      ]
+                    ),
+                    Text("Akaki Kality", style: TextStyle(
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20
+                    ),)
+                  ],
+                ),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.blueAccent,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withOpacity(0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -88,16 +133,15 @@ class _MapScreenState extends State<MapScreen> {
                   child: IconButton(
                     onPressed: () {},
                     icon: const Icon(
-                      FontAwesomeIcons.filter,
-                      color: Colors.white,
-                      size: 18,
+                      Icons.dashboard,
+                      color: Colors.black54,
+                      size: 30,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          // Description panel - only shows when a marker is selected
           if (_selectedMarkerId != null)
             Positioned(
               left: 0,
@@ -185,7 +229,9 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const StationDetailsScreen()));
+                            },
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.lightBlue),
                               shape: RoundedRectangleBorder(
@@ -202,8 +248,7 @@ class _MapScreenState extends State<MapScreen> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {
-                              // Add booking logic here
-                              print("Booking bike at ${getMarkerTitle(_selectedMarkerId!)}");
+                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const BookingConfirmationScreen()));
                             },
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.blueAccent),

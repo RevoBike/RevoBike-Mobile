@@ -1,7 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
+import 'package:revobike/presentation/screens/stations/StationDetails.dart';
 
 class StationScreen extends StatelessWidget {
   final List<Station> stations = [
@@ -26,6 +26,13 @@ class StationScreen extends StatelessWidget {
         distance: "3.0 mi",
         rate: "\$0.4/km",
         status: "closed"),
+    Station(
+        name: "Shiro Meda Station",
+        location: "Shiro Meda",
+        availableBikes: 12,
+        distance: "4.5 mi",
+        rate: "\$0.6/km",
+        status: "open"),
   ];
 
   StationScreen({super.key});
@@ -98,7 +105,7 @@ class StationScreen extends StatelessWidget {
                       Text("${station.distance} away",
                           style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
                       const Spacer(),
-                      const Icon(FontAwesomeIcons.moneyBillWave, size: 16, color: Colors.blue),
+                      const Icon(FontAwesomeIcons.dollarSign, size: 16, color: Colors.blue),
                       const SizedBox(width: 8),
                       Text(station.rate, style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
                     ],
@@ -110,7 +117,7 @@ class StationScreen extends StatelessWidget {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            //
+                            Navigator.of(context).push(MaterialPageRoute(builder: (context) => const StationDetailsScreen()));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -128,7 +135,7 @@ class StationScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: station.status == "open" ? () => _browseBikes(context, station) : null,
+                          onPressed: station.status == "open" ? () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const BookingConfirmationScreen())) : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: station.status == "open" ? Colors.blue : Colors.grey,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -143,15 +150,6 @@ class StationScreen extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-
-  void _browseBikes(BuildContext context, Station station) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Booking a bike at ${station.name}"),
-        backgroundColor: Colors.blue,
       ),
     );
   }

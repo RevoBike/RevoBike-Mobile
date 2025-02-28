@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static List<Widget> screens = [
     const MapScreen(),
     StationScreen(),
-    const RecentScreen(),
+    const RecentTripsScreen(),
     const AccountScreen(),
   ];
 
@@ -79,16 +79,16 @@ class _HomeScreenState extends State<HomeScreen> {
             unselectedIcon: FontAwesomeIcons.chargingStation,
           ),
           CrystalNavigationBarItem(
-            icon: FontAwesomeIcons.locationDot,
+            icon: FontAwesomeIcons.clockRotateLeft,
             selectedColor: Colors.blueAccent,
             unselectedColor: Colors.grey[400],
-            unselectedIcon: FontAwesomeIcons.locationDot,
+            unselectedIcon: FontAwesomeIcons.clockRotateLeft,
           ),
           CrystalNavigationBarItem(
-            icon: FontAwesomeIcons.solidUser,
+            icon: FontAwesomeIcons.userGear,
             selectedColor: Colors.blueAccent,
             unselectedColor: Colors.grey[400],
-            unselectedIcon: FontAwesomeIcons.user,
+            unselectedIcon: FontAwesomeIcons.userGear,
           ),
         ],
       )

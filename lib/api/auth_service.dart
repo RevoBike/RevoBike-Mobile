@@ -18,18 +18,19 @@ class AuthService {
       'password': password,
     });
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 201 || response.statusCode == 200) {
       final data = json.decode(response.toString());
       String token = data['token'];
 
       await _storage.write(key: 'jwt_token', value: token);
 
       return token;
-    } else if (response.statusCode == 400) {
+    } else if (response.statusCode == 400 || response.statusCode == 401) {
       final data = json.decode(response.toString());
       if (data['error'] == 'Email already exists') {
         throw Exception('Email is already taken');
-      } else {
+      } else if (data['error'] == 'Invalid credentials') {
+          throw Exception('Invalid email or password');
         throw Exception('User already exists');
       }
     } else {

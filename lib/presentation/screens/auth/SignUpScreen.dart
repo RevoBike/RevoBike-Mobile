@@ -74,15 +74,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
     try {
       setState(() {
-        buttonChild = LoadingAnimationWidget.fallingDot(
-            color: Colors.white, size: 20);
+        buttonChild =
+            LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
       });
       await authService.register(
         _nameController.text,
         _emailController.text,
         _passwordController.text,
       );
+      await authService
+          .fetchUserProfile(); // Successfully registered user profile
       UserModel user = await authService.fetchUserProfile();
+      print(user); // Successfully registered user profile
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -148,10 +151,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: _emailController,
                             decoration: const InputDecoration(
                               hintText: "Email ID",
-                              hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16
-                              ),
+                              hintStyle:
+                                  TextStyle(color: Colors.grey, fontSize: 16),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
@@ -174,10 +175,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: _nameController,
                             decoration: const InputDecoration(
                               hintText: "Full Name",
-                              hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16
-                              ),
+                              hintStyle:
+                                  TextStyle(color: Colors.grey, fontSize: 16),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
@@ -201,36 +200,35 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             decoration: InputDecoration(
                                 hintText: "Password",
                                 hintStyle: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 16
-                                ),
+                                    color: Colors.grey, fontSize: 16),
                                 suffixIcon: IconButton(
-                                    onPressed: (){
+                                    onPressed: () {
                                       setState(() {
-                                        _isPasswordVisible = !_isPasswordVisible;
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
                                       });
                                     },
-                                    icon: _isPasswordVisible ? const Icon(Icons.visibility) : const Icon(Icons.visibility_off)
+                                    icon: _isPasswordVisible
+                                        ? const Icon(Icons.visibility)
+                                        : const Icon(Icons.visibility_off)),
+                                enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.0,
+                                  ),
                                 ),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
-                              ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: _strength == 1.0
-                                      ? Colors.green
-                                      : _strength >= 0.75
-                                      ? Colors.blue
-                                      : _strength >= 0.5
-                                      ? Colors.orange
-                                      : Colors.red,
-                                  width: 1.0,
-                                ),
-                              )
-                            ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: _strength == 1.0
+                                        ? Colors.green
+                                        : _strength >= 0.75
+                                            ? Colors.blue
+                                            : _strength >= 0.5
+                                                ? Colors.orange
+                                                : Colors.red,
+                                    width: 1.0,
+                                  ),
+                                )),
                             obscureText: _isPasswordVisible ? false : true,
                           ),
                         ),
@@ -257,16 +255,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const Text("Already have RevoBike account? "),
                         TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const LoginScreen()));
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => const LoginScreen()));
                             },
-                            child: const Text(
-                                "Login",
+                            child: const Text("Login",
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,
-                                )
-                            )
-                        )
+                                )))
                       ],
                     )
                   ],

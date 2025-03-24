@@ -49,14 +49,14 @@ class _LoginScreenState extends State<LoginScreen> {
           _passwordController.text,
         );
         UserModel user = await _authService.fetchUserProfile();
-        print(user);
+        print(user); // Successfully logged in user profile
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } catch (e) {
         setState(() {
-          _errorMessage = 'Failed to login. Please check your credentials.';
+          _errorMessage = e.toString(); // Display specific error message
         });
       } finally {
         setState(() {

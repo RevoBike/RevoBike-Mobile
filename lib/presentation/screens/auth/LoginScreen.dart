@@ -35,14 +35,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = '';
       _emailError = _emailController.text.isEmpty ? 'Email is required' : null;
       _passwordError =
-      _passwordController.text.isEmpty ? 'Password is required' : null;
+          _passwordController.text.isEmpty ? 'Password is required' : null;
     });
 
     if (_emailError == null && _passwordError == null) {
       try {
         setState(() {
-          buttonChild = LoadingAnimationWidget.fallingDot(
-              color: Colors.white, size: 20);
+          buttonChild =
+              LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
         });
         await _authService.login(
           _emailController.text,
@@ -90,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 30),
               Center(
                 child: SvgPicture.asset(
-                  "assets/images/login_image.svg",
+                  "assets/images/bike_parking.svg",
                   width: MediaQuery.of(context).size.width / 1.2,
                   height: MediaQuery.of(context).size.height / 2.7,
                 ),
@@ -120,10 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _emailController,
                             decoration: const InputDecoration(
                               hintText: "Email ID",
-                              hintStyle: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16
-                              ),
+                              hintStyle:
+                                  TextStyle(color: Colors.grey, fontSize: 16),
                               enabledBorder: UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
@@ -144,38 +142,37 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
-                              hintText: "Password",
-                              hintStyle: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16
-                              ),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
+                                hintText: "Password",
+                                hintStyle: const TextStyle(
+                                    color: Colors.grey, fontSize: 16),
+                                enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Colors.grey,
+                                    width: 1.0,
+                                  ),
                                 ),
-                              ),
-                              suffixIcon: IconButton(
-                                onPressed: (){
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                                  icon: _isPasswordVisible ? const Icon(Icons.visibility) : const Icon(Icons.visibility_off)
-                              )
-                            ),
+                                suffixIcon: IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _isPasswordVisible =
+                                            !_isPasswordVisible;
+                                      });
+                                    },
+                                    icon: _isPasswordVisible
+                                        ? const Icon(Icons.visibility)
+                                        : const Icon(Icons.visibility_off))),
                             obscureText: _isPasswordVisible ? false : true,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text("Forgot Password?",
+                    const Text(
+                      "Forgot Password?",
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        color: Colors.blueAccent,
-                        fontSize: 14
-                      ),
+                          fontWeight: FontWeight.w900,
+                          color: Colors.blueAccent,
+                          fontSize: 14),
                       textAlign: TextAlign.end,
                     ),
                     const SizedBox(height: 10),
@@ -199,16 +196,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Text("New to RevoBike? "),
                         TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SignUpScreen()));
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => const SignUpScreen()));
                             },
-                            child: const Text(
-                                "Register",
+                            child: const Text("Register",
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,
-                                )
-                            )
-                        )
+                                )))
                       ],
                     )
                   ],

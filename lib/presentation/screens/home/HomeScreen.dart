@@ -1,6 +1,8 @@
 import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:revobike/presentation/widget/CustomAppBar.dart';
+import 'package:revobike/presentation/widget/BottomNavBar.dart';
 import 'package:location/location.dart';
 import 'package:revobike/presentation/screens/account/AccountScreen.dart';
 import 'package:revobike/presentation/screens/auth/SignUpScreen.dart';
@@ -18,6 +20,12 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   var _currentIndex = 0;
+  final List<String> _bikeStations = [
+    'Tuludimtu Gate 3',
+    'Kilinto Gate 2',
+    'Central Main Campus',
+    'Classes Block 59',
+  ];
 
   Location location = Location();
 
@@ -33,66 +41,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       extendBody: true,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Welcome to RevoBike!',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Current Status: Unverified. Please visit a station to get verified.',
-                style: TextStyle(fontSize: 18),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'Instructions: Visit a nearby station to complete your verification.',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Nearby Station',
-                hintText: 'Enter nearby station',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Destination',
-                hintText: 'Enter your destination',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            Container(
-              height: 300, // Set height for the map
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(37.7749, -122.4194), // Example coordinates
-                  zoom: 12,
-                ),
-                markers: Set<Marker>.of(<Marker>[
-                  Marker(
-                    markerId: MarkerId('station1'),
-                    position: LatLng(37.7749, -122.4194), // Example station
-                    infoWindow: InfoWindow(title: 'Nearby Station 1'),
-                  ),
-                  // Add more markers as needed
-                ]),
-              ),
-            ),
-            // Add more widgets as needed
-          ],
-        ),
+      appBar: CustomAppBar(
+        title: 'RevoBike',
+      ),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: screens,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -116,52 +70,13 @@ class _HomeScreenState extends State<HomeScreen> {
       //   foregroundColor: Colors.black,
       //   child: const Icon(Icons.center_focus_strong),
       // ),
-      bottomNavigationBar: CrystalNavigationBar(
-        marginR: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+      bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,
-        indicatorColor: Colors.transparent,
-        backgroundColor: Colors.white,
-        outlineBorderColor: Colors.transparent,
-        splashColor: Colors.transparent,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        borderRadius: 20,
         onTap: (index) {
           setState(() {
             _currentIndex = index;
           });
         },
-        items: [
-          CrystalNavigationBarItem(
-            icon: FontAwesomeIcons.house,
-            selectedColor: Colors.blueAccent,
-            unselectedColor: Colors.grey[400],
-            unselectedIcon: FontAwesomeIcons.house,
-          ),
-          CrystalNavigationBarItem(
-            icon: FontAwesomeIcons.chargingStation,
-            selectedColor: Colors.blueAccent,
-            unselectedColor: Colors.grey[400],
-            unselectedIcon: FontAwesomeIcons.chargingStation,
-          ),
-          CrystalNavigationBarItem(
-            icon: FontAwesomeIcons.clockRotateLeft,
-            selectedColor: Colors.blueAccent,
-            unselectedColor: Colors.grey[400],
-            unselectedIcon: FontAwesomeIcons.clockRotateLeft,
-          ),
-          CrystalNavigationBarItem(
-            icon: FontAwesomeIcons.userGear,
-            selectedColor: Colors.blueAccent,
-            unselectedColor: Colors.grey[400],
-            unselectedIcon: FontAwesomeIcons.userGear,
-          ),
-        ],
       )
     );
   }

@@ -69,53 +69,46 @@ class _MapScreenState extends State<MapScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const CircleAvatar(
-                    maxRadius: 25,
-                    backgroundColor: Colors.white,
-                    backgroundImage: AssetImage(
-                      "assets/images/img.png"
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  )
-                ),
+                    child: const CircleAvatar(
+                      maxRadius: 25,
+                      backgroundColor: Colors.white,
+                      backgroundImage: AssetImage("assets/images/img.png"),
+                    )),
                 const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          FontAwesomeIcons.locationArrow,
-                          color: Colors.blueAccent,
-                          size: 15,
-                        ),
-                        SizedBox(width: 5),
-                        Text(
-                          "Your Location",
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(
+                        FontAwesomeIcons.locationArrow,
+                        color: Colors.blueAccent,
+                        size: 15,
+                      ),
+                      SizedBox(width: 5),
+                      Text("Your Location",
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black45
-                          )
-                        ),
-                      ]
-                    ),
-                    Text("Akaki Kality", style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20
-                    ),)
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black45)),
+                    ]),
+                    Text(
+                      "Akaki Kality",
+                      style: TextStyle(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 20),
+                    )
                   ],
                 ),
                 Container(
@@ -184,11 +177,12 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                           child: IconButton(
                             icon: const Icon(
-                                FontAwesomeIcons.share,
-                                color: Colors.white,
+                              FontAwesomeIcons.share,
+                              color: Colors.white,
                               size: 16,
                             ),
-                            onPressed: () => setState(() => _selectedMarkerId = null),
+                            onPressed: () =>
+                                setState(() => _selectedMarkerId = null),
                           ),
                         ),
                       ],
@@ -203,11 +197,13 @@ class _MapScreenState extends State<MapScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Icon(FontAwesomeIcons.bicycle, size: 18, color: Colors.green),
+                        const Icon(FontAwesomeIcons.bicycle,
+                            size: 18, color: Colors.green),
                         const SizedBox(width: 10),
                         Text(
                           "Available Bikes: ${getAvailableBikes(_selectedMarkerId!)}",
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -215,11 +211,13 @@ class _MapScreenState extends State<MapScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Icon(FontAwesomeIcons.doorOpen, size: 18, color: Colors.blue),
+                        const Icon(FontAwesomeIcons.doorOpen,
+                            size: 18, color: Colors.blue),
                         const SizedBox(width: 8),
                         Text(
                           "Status: ${getStationStatus(_selectedMarkerId!)}",
-                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -230,7 +228,9 @@ class _MapScreenState extends State<MapScreen> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const StationDetailsScreen()));
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) =>
+                                      const StationDetailsScreen()));
                             },
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.lightBlue),
@@ -240,7 +240,8 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                             child: const Text(
                               "View",
-                              style: TextStyle(color: Colors.lightBlue, fontSize: 18),
+                              style: TextStyle(
+                                  color: Colors.lightBlue, fontSize: 18),
                             ),
                           ),
                         ),
@@ -248,7 +249,9 @@ class _MapScreenState extends State<MapScreen> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const BookingConfirmationScreen()));
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) =>
+                                      const BookingConfirmationScreen()));
                             },
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.blueAccent),
@@ -259,7 +262,8 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                             child: const Text(
                               "Book",
-                              style: TextStyle(color: Colors.white, fontSize: 18),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
                             ),
                           ),
                         ),
@@ -280,7 +284,8 @@ class _MapScreenState extends State<MapScreen> {
         markerId: const MarkerId('Meskel Square Station'),
         position: const LatLng(9.0069631, 38.7622717),
         infoWindow: const InfoWindow(title: "Meskel Square Station"),
-        onTap: () => setState(() => _selectedMarkerId = 'Meskel Square Station'),
+        onTap: () =>
+            setState(() => _selectedMarkerId = 'Meskel Square Station'),
       ),
       Marker(
         markerId: const MarkerId('Tor Hayloch Station'),

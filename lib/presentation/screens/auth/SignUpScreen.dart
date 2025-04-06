@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:revobike/api/auth_service.dart';
-import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
-import 'package:revobike/presentation/screens/home/HomeScreen.dart';
+import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -50,6 +49,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void validateAndRegister() async {
+    // Validate all fields are filled
     if (_emailController.text.isEmpty ||
         _nameController.text.isEmpty ||
         _passwordController.text.isEmpty) {
@@ -61,12 +61,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
       return;
     }
-    if (_emailController.text.length < 6 ||
-        _nameController.text.length < 6 ||
+
+    // Validate institutional email format
+    final emailRegex = RegExp(
+      r'^[a-zA-Z]+\.[a-zA-Z]+@aastu(student|staff)\.edu\.et$',
+      caseSensitive: false
+    );
+    if (!emailRegex.hasMatch(_emailController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please use your AASTU institutional email (name.lastname@aastustudent.edu.et or name.lastname@aastustaff.edu.et)'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate minimum lengths
+    if (_nameController.text.length < 6 ||
         _passwordController.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Minimum length is 6 characters'),
+          content: Text('Name and password must be at least 6 characters'),
           backgroundColor: Colors.red,
         ),
       );
@@ -77,18 +93,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
         buttonChild =
             LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
       });
+      // First register the user (this will trigger OTP sending)
       await authService.register(
         _nameController.text,
         _emailController.text,
         _passwordController.text,
       );
-      await authService
-          .fetchUserProfile(); // Successfully registered user profile
-      UserModel user = await authService.fetchUserProfile();
-      print(user); // Successfully registered user profile
+      
+      // Navigate to OTP verification screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationScreen(
+            email: _emailController.text,
+            name: _nameController.text,
+            password: _passwordController.text,
+          ),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

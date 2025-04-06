@@ -26,17 +26,17 @@ class MyApp extends StatelessWidget {
 }
 
 class SplashScreen extends StatelessWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     Future.delayed(const Duration(milliseconds: 500), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const AuthCheckScreen()),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     });
 
-    return Scaffold(
+    return const Scaffold(
       backgroundColor: Colors.white,
       body: Center(
         child: Column(

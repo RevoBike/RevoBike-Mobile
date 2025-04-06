@@ -9,8 +9,7 @@ class AuthService {
 
   final String _baseUrl = "http://10.0.2.2:5000/api";
 
-  Future<String?> register(
-      String name, String email, String password) async {
+  Future<String?> register(String name, String email, String password) async {
     Dio dio = Dio();
     Response response = await dio.post('$_baseUrl/users/register', data: {
       'name': name,
@@ -19,20 +18,16 @@ class AuthService {
     });
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      final data = json.decode(response.toString());
-      String token = data['token'];
-
-      await _storage.write(key: 'jwt_token', value: token);
-
-      return token;
+      // Registration successful, OTP sent to email
+      return null;
     } else if (response.statusCode == 400 || response.statusCode == 401) {
       final data = json.decode(response.toString());
       if (data['error'] == 'Email already exists') {
         throw Exception('Email is already taken');
       } else if (data['error'] == 'Invalid credentials') {
-          throw Exception('Invalid email or password');
-        throw Exception('User already exists');
+        throw Exception('Invalid email or password');
       }
+      throw Exception('User already exists');
     } else {
       throw Exception('Failed to register');
     }
@@ -95,6 +90,36 @@ class AuthService {
     final expirationDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
 
     return expirationDate.isBefore(DateTime.now());
+  }
+
+  Future<bool> verifyOtp(String email, String otp) async {
+    Dio dio = Dio();
+    Response response = await dio.post('$_baseUrl/users/verify-otp', data: {
+      'email': email,
+      'otp': otp,
+    });
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.toString());
+      String token = data['token'];
+      await _storage.write(key: 'jwt_token', value: token);
+      return true;
+    } else {
+      throw Exception('Invalid OTP');
+    }
+  }
+
+  Future<bool> resendOtp(String email) async {
+    Dio dio = Dio();
+    Response response = await dio.post('$_baseUrl/users/resend-otp', data: {
+      'email': email,
+    });
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      throw Exception('Failed to resend OTP');
+    }
   }
 
   Future<UserModel> fetchUserProfile() async {

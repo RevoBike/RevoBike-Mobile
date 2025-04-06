@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -29,7 +30,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   bool _isResending = false;
 
   Widget buttonChild = const Text(
-    "Verify OTP",
+    "Verify",
     style: TextStyle(
         color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
   );
@@ -39,6 +40,32 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     style: TextStyle(
         color: Colors.blue, fontSize: 15, fontWeight: FontWeight.w600),
   );
+  int _countdown = 60;
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startCountdown();
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  void _startCountdown() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdown > 0) {
+        setState(() {
+          _countdown--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
 
   void _verifyOtp() async {
     final otp = _otpControllers.map((c) => c.text).join();
@@ -194,7 +221,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ElevatedButton(
                 onPressed: _isVerifying ? null : _verifyOtp,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                   backgroundColor: Colors.blueAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -203,9 +230,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 child: buttonChild,
               ),
               const SizedBox(height: 20),
-              TextButton(
-                onPressed: _isResending ? null : _resendOtp,
-                child: resendButtonChild,
+              SizedBox(
+                width: 120,
+                child: TextButton(
+                  onPressed: (_isResending || _countdown > 0) ? null : _resendOtp,
+                  child: _countdown > 0 
+                    ? Text(
+                        'Resend in $_countdown',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
+                      )
+                    : resendButtonChild,
+                ),
               ),
             ],
           ),

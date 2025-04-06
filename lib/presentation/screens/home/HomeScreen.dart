@@ -39,45 +39,44 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      extendBody: true,
-      appBar: CustomAppBar(
-        title: 'RevoBike',
-      ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: screens,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SignUpScreen()),
-          );
-        },
-        child: const Icon(Icons.person_add),
-      ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () => _googleMapController.animateCamera(
-      //     CameraUpdate.newCameraPosition(
-      //       CameraPosition(
-      //         target: _currentLocation,
-      //         zoom: 11.5,
-      //       ),
-      //     ),
-      //   ),
-      //   backgroundColor: Colors.white,
-      //   foregroundColor: Colors.black,
-      //   child: const Icon(Icons.center_focus_strong),
-      // ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-      )
-    );
+        backgroundColor: Colors.white,
+        extendBody: true,
+        appBar: CustomAppBar(
+          title: 'RevoBike',
+        ),
+        body: IndexedStack(
+          index: _currentIndex,
+          children: screens,
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SignUpScreen()),
+            );
+          },
+          child: const Icon(Icons.person_add),
+        ),
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: () => _googleMapController.animateCamera(
+        //     CameraUpdate.newCameraPosition(
+        //       CameraPosition(
+        //         target: _currentLocation,
+        //         zoom: 11.5,
+        //       ),
+        //     ),
+        //   ),
+        //   backgroundColor: Colors.white,
+        //   foregroundColor: Colors.black,
+        //   child: const Icon(Icons.center_focus_strong),
+        // ),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+        ));
   }
 }

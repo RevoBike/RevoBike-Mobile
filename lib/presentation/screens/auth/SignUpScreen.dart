@@ -18,6 +18,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  
+  // Error state variables
+  String? _emailError;
+  String? _nameError;
+  String? _passwordError;
+  String? _generalError;
 
   double _strength = 0.0;
 
@@ -49,16 +55,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void validateAndRegister() async {
-    // Validate all fields are filled
-    if (_emailController.text.isEmpty ||
-        _nameController.text.isEmpty ||
-        _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    // Clear previous errors
+    setState(() {
+      _emailError = null;
+      _nameError = null;
+      _passwordError = null;
+      _generalError = null;
+    });
+
+    // Validate fields
+    if (_emailController.text.isEmpty) {
+      setState(() => _emailError = 'Email is required');
+    }
+    if (_nameController.text.isEmpty) {
+      setState(() => _nameError = 'Name is required');
+    }
+    if (_passwordController.text.isEmpty) {
+      setState(() => _passwordError = 'Password is required');
+    }
+
+    // If any field errors, stop here
+    if (_emailError != null || _nameError != null || _passwordError != null) {
       return;
     }
 
@@ -68,24 +85,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       caseSensitive: false
     );
     if (!emailRegex.hasMatch(_emailController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please use your AASTU institutional email (name.lastname@aastustudent.edu.et or name.lastname@aastustaff.edu.et)'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() => _emailError = 'Use AASTU institutional email');
       return;
     }
 
     // Validate minimum lengths
-    if (_nameController.text.length < 6 ||
-        _passwordController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Name and password must be at least 6 characters'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (_nameController.text.length < 6) {
+      setState(() => _nameError = 'Name must be at least 6 characters');
+    }
+    if (_passwordController.text.length < 6) {
+      setState(() => _passwordError = 'Password must be at least 6 characters');
+    }
+    
+    if (_nameError != null || _passwordError != null) {
       return;
     }
     try {
@@ -112,14 +124,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
       setState(() {
+        _generalError = e.toString();
         buttonChild = const Text(
           "Sign Up",
           style: TextStyle(
@@ -170,21 +176,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: "Email ID",
-                              hintStyle:
-                                  TextStyle(color: Colors.grey, fontSize: 16),
-                              enabledBorder: UnderlineInputBorder(
+                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                              enabledBorder: const UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
                                   width: 1.0,
                                 ),
                               ),
+                              errorText: _emailError,
+                              errorStyle: const TextStyle(color: Colors.red),
                             ),
                           ),
                         ),
                       ],
                     ),
+                    if (_emailError != null) const SizedBox(height: 5),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -194,21 +202,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _nameController,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: "Full Name",
-                              hintStyle:
-                                  TextStyle(color: Colors.grey, fontSize: 16),
-                              enabledBorder: UnderlineInputBorder(
+                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                              enabledBorder: const UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
                                   width: 1.0,
                                 ),
                               ),
+                              errorText: _nameError,
+                              errorStyle: const TextStyle(color: Colors.red),
                             ),
                           ),
                         ),
                       ],
                     ),
+                    if (_nameError != null) const SizedBox(height: 5),
                     const SizedBox(height: 10),
                     Row(
                       children: [
@@ -219,42 +229,45 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: _passwordController,
                             onChanged: _checkPasswordStrength,
                             decoration: InputDecoration(
-                                hintText: "Password",
-                                hintStyle: const TextStyle(
-                                    color: Colors.grey, fontSize: 16),
-                                suffixIcon: IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _isPasswordVisible =
-                                            !_isPasswordVisible;
-                                      });
-                                    },
-                                    icon: _isPasswordVisible
-                                        ? const Icon(Icons.visibility)
-                                        : const Icon(Icons.visibility_off)),
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.grey,
-                                    width: 1.0,
-                                  ),
+                              hintText: "Password",
+                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                                icon: _isPasswordVisible
+                                    ? const Icon(Icons.visibility)
+                                    : const Icon(Icons.visibility_off)
+                              ),
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.grey,
+                                  width: 1.0,
                                 ),
-                                focusedBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: _strength == 1.0
-                                        ? Colors.green
-                                        : _strength >= 0.75
-                                            ? Colors.blue
-                                            : _strength >= 0.5
-                                                ? Colors.orange
-                                                : Colors.red,
-                                    width: 1.0,
-                                  ),
-                                )),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: _strength == 1.0
+                                      ? Colors.green
+                                      : _strength >= 0.75
+                                          ? Colors.blue
+                                          : _strength >= 0.5
+                                              ? Colors.orange
+                                              : Colors.red,
+                                  width: 1.0,
+                                ),
+                              ),
+                              errorText: _passwordError,
+                              errorStyle: const TextStyle(color: Colors.red),
+                            ),
                             obscureText: _isPasswordVisible ? false : true,
                           ),
                         ),
                       ],
                     ),
+                    if (_passwordError != null) const SizedBox(height: 5),
                     const SizedBox(height: 30),
                     ElevatedButton(
                       onPressed: () {

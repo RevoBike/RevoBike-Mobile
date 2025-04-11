@@ -13,8 +13,8 @@ class AuthCheckScreen extends StatefulWidget {
 }
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
-  final AuthService _authService = AuthService();
-
+  final AuthService _authService =
+      AuthService(baseUrl: "http://10.0.2.2:5000/api");
   @override
   void initState() {
     super.initState();
@@ -22,7 +22,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   }
 
   Future<void> _checkAuthentication() async {
-    bool isAuthenticated = await _authService.isAuthenticated();
+    bool isAuthenticated = await _authService.isAuthenticated;
 
     if (isAuthenticated) {
       UserModel user = await _authService.fetchUserProfile();

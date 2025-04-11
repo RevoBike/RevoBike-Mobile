@@ -89,7 +89,7 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
         setState(() => _isLoading = false);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => PaymentScreen()),
+          MaterialPageRoute(builder: (context) => const PaymentScreen()),
         );
       });
     } else {

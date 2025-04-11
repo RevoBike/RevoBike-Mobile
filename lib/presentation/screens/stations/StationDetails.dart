@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
 
 class StationDetailsScreen extends StatelessWidget {
-  const StationDetailsScreen({super.key});
+  final Station station;
+
+  const StationDetailsScreen({super.key, required this.station});
 
   @override
   Widget build(BuildContext context) {
@@ -30,18 +33,20 @@ class StationDetailsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Saris Abo Station",
-                          style: TextStyle(
+                      Text(station.name,
+                          style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Colors.black)),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, color: Colors.grey, size: 18),
+                          const Icon(Icons.location_on,
+                              color: Colors.grey, size: 18),
                           const SizedBox(width: 4),
-                          Text("Saris Abo Area",
-                              style: TextStyle(fontSize: 14, color: Colors.grey.shade700)),
+                          Text(station.location,
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey.shade700)),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -53,7 +58,8 @@ class StationDetailsScreen extends StatelessWidget {
                               Icon(Icons.phone, color: Colors.blue, size: 18),
                               SizedBox(width: 4),
                               Text("+251989341234",
-                                  style: TextStyle(fontSize: 14, color: Colors.blue)),
+                                  style: TextStyle(
+                                      fontSize: 14, color: Colors.blue)),
                             ],
                           ),
                           Row(
@@ -61,7 +67,8 @@ class StationDetailsScreen extends StatelessWidget {
                               Icon(Icons.star, color: Colors.orange, size: 18),
                               SizedBox(width: 4),
                               Text("4.7 (83 Reviews)",
-                                  style: TextStyle(fontSize: 14, color: Colors.black87)),
+                                  style: TextStyle(
+                                      fontSize: 14, color: Colors.black87)),
                             ],
                           ),
                         ],
@@ -70,8 +77,9 @@ class StationDetailsScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _infoCard("13", "Available Bikes"),
-                          _infoCard("Br.200/KM", "Price"),
+                          _infoCard(
+                              "${station.availableBikes}", "Available Bikes"),
+                          _infoCard("Br.${station.rate}/KM", "Price"),
                           _infoCard("2 hrs", "Maximum Time"),
                         ],
                       ),
@@ -85,7 +93,8 @@ class StationDetailsScreen extends StatelessWidget {
                                 foregroundColor: Colors.blue,
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(color: Colors.blueAccent, width: 1)),
+                                    side: const BorderSide(
+                                        color: Colors.blueAccent, width: 1)),
                               ),
                               onPressed: () {},
                               child: const Text("Get Direction"),
@@ -101,7 +110,10 @@ class StationDetailsScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8)),
                               ),
                               onPressed: () {
-                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => const BookingConfirmationScreen()));
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) =>
+                                        BookingConfirmationScreen(
+                                            station: station)));
                               },
                               child: const Text("Book"),
                             ),
@@ -110,12 +122,13 @@ class StationDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       const Text("About",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
                       const Text(
                         "The Saris Abo station is an innovative energy solution that embodies modern technology "
-                            "and the desire for a sustainable future. This station combines advanced engineering "
-                            "solutions, alternative energy sources, and high efficiency.",
+                        "and the desire for a sustainable future. This station combines advanced engineering "
+                        "solutions, alternative energy sources, and high efficiency.",
                         style: TextStyle(fontSize: 14, color: Colors.black54),
                       ),
                       const SizedBox(height: 16),
@@ -124,14 +137,16 @@ class StationDetailsScreen extends StatelessWidget {
                         child: SizedBox(
                           height: 200,
                           child: GoogleMap(
-                            initialCameraPosition: const CameraPosition(
-                              target: LatLng(9.0069631, 38.6622717),
+                            initialCameraPosition: CameraPosition(
+                              target:
+                                  LatLng(station.latitude, station.longitude),
                               zoom: 14,
                             ),
                             markers: {
-                              const Marker(
-                                markerId: MarkerId('Saris Abo Station'),
-                                position: LatLng(9.0069631, 38.6622717),
+                              Marker(
+                                markerId: MarkerId(station.id),
+                                position:
+                                    LatLng(station.latitude, station.longitude),
                               ),
                             },
                           ),
@@ -179,7 +194,8 @@ class StationDetailsScreen extends StatelessWidget {
             style: const TextStyle(
                 fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
         const SizedBox(height: 4),
-        Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+        Text(subtitle,
+            style: const TextStyle(fontSize: 12, color: Colors.black54)),
       ],
     );
   }

@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
+import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
 import 'dart:async';
 
 class BookingConfirmationScreen extends StatefulWidget {
-  const BookingConfirmationScreen({super.key});
+  final Station station;
+
+  const BookingConfirmationScreen({super.key, required this.station});
 
   @override
-  State<BookingConfirmationScreen> createState() => _BookingConfirmationScreenState();
+  State<BookingConfirmationScreen> createState() =>
+      _BookingConfirmationScreenState();
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
-  String stationName = "Downtown Bike Hub";
-  String stationLocation = "123 Main St, City Center";
   String bikeId = "#A1023";
-  double pricePerKm = 0.5;
   int batteryLife = 85;
   bool isLoading = true;
   Timer? _countdownTimer;
@@ -64,77 +65,111 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Booking Confirmation", style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        foregroundColor: Colors.black87,
-        elevation: 0,
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.blue))
-          : Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.shade300,
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Column(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Lottie.asset("assets/animations/bikee.json", width: 200, height: 200, fit: BoxFit.cover),
-                  const SizedBox(height: 15),
-                  Text(stationName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  Text(stationLocation, style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
-                  const Divider(height: 30, thickness: 1, color: Colors.blueAccent),
-                  Text("Bike ID: $bikeId", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text("Pricing Rate: \$$pricePerKm per km", style: const TextStyle(fontSize: 16)),
-                  Text("Battery Life: $batteryLife%", style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade700,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      "Time left: ${_countdownSeconds ~/ 60}:${(_countdownSeconds % 60).toString().padLeft(2, '0')}",
-                      style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+                  IconButton(
+                    icon: const Icon(FontAwesomeIcons.arrowLeft),
+                    onPressed: _cancelBooking,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Booking Confirmation",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 30),
-            ElevatedButton.icon(
-              icon: const Icon(FontAwesomeIcons.check),
-              label: const Text("Confirm & Start Ride"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade700,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                minimumSize: const Size(double.infinity, 50),
+              const SizedBox(height: 20),
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Lottie.asset("assets/animations/bikee.json",
+                          width: 200, height: 200, fit: BoxFit.cover),
+                      const SizedBox(height: 15),
+                      Text(widget.station.name,
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text(widget.station.location,
+                          style: TextStyle(
+                              fontSize: 16, color: Colors.grey.shade600)),
+                      const Divider(
+                          height: 30, thickness: 1, color: Colors.blueAccent),
+                      Text("Bike ID: $bikeId",
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text("Pricing Rate: Br.${widget.station.rate} per km",
+                          style: const TextStyle(fontSize: 16)),
+                      Text("Battery Life: $batteryLife%",
+                          style: const TextStyle(fontSize: 16)),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade700,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          "Time left: ${_countdownSeconds ~/ 60}:${(_countdownSeconds % 60).toString().padLeft(2, '0')}",
+                          style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              onPressed: _confirmBooking,
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              icon: const Icon(FontAwesomeIcons.circleXmark, color: Colors.red),
-              label: const Text("Cancel Booking", style: TextStyle(color: Colors.red, fontSize: 16)),
-              onPressed: _cancelBooking,
-            ),
-          ],
+              const SizedBox(height: 30),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _cancelBooking,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.blue),
+                        ),
+                      ),
+                      child: const Text("Cancel"),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _confirmBooking,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text("Confirm"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

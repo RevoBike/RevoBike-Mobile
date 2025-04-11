@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
 import 'package:revobike/presentation/screens/stations/StationDetails.dart';
 
@@ -229,8 +230,9 @@ class _MapScreenState extends State<MapScreen> {
                           child: OutlinedButton(
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) =>
-                                      const StationDetailsScreen()));
+                                  builder: (context) => StationDetailsScreen(
+                                      station: getStationFromMarkerId(
+                                          _selectedMarkerId!))));
                             },
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.lightBlue),
@@ -251,7 +253,9 @@ class _MapScreenState extends State<MapScreen> {
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) =>
-                                      const BookingConfirmationScreen()));
+                                      BookingConfirmationScreen(
+                                          station: getStationFromMarkerId(
+                                              _selectedMarkerId!))));
                             },
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Colors.blueAccent),
@@ -353,6 +357,55 @@ class _MapScreenState extends State<MapScreen> {
         return "Located in the southern area, known for its proximity to residential zones.";
       default:
         return "No description available.";
+    }
+  }
+
+  Station getStationFromMarkerId(String markerId) {
+    switch (markerId) {
+      case 'Meskel Square Station':
+        return Station(
+          id: '1',
+          name: 'Meskel Square Station',
+          location: 'Meskel Square, Addis Ababa',
+          latitude: 9.0069631,
+          longitude: 38.7622717,
+          availableBikes: 12,
+          rate: 2.5,
+          status: 'open',
+        );
+      case 'Tor Hayloch Station':
+        return Station(
+          id: '2',
+          name: 'Tor Hayloch Station',
+          location: 'Tor Hayloch, Addis Ababa',
+          latitude: 9.0016631,
+          longitude: 38.723503,
+          availableBikes: 8,
+          rate: 2.5,
+          status: 'open',
+        );
+      case 'Saris Abo Station':
+        return Station(
+          id: '3',
+          name: 'Saris Abo Station',
+          location: 'Saris Abo, Addis Ababa',
+          latitude: 8.9812889,
+          longitude: 38.7596757,
+          availableBikes: 5,
+          rate: 2.5,
+          status: 'open',
+        );
+      default:
+        return Station(
+          id: '0',
+          name: 'Unknown Station',
+          location: 'Unknown Location',
+          latitude: 0,
+          longitude: 0,
+          availableBikes: 0,
+          rate: 0,
+          status: 'closed',
+        );
     }
   }
 

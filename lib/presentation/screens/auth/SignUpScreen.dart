@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:revobike/api/auth_service.dart';
+import 'package:dio/dio.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
 
@@ -13,16 +14,21 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final AuthService authService = AuthService();
+  final AuthService authService = AuthService(
+    baseUrl: const String.fromEnvironment('API_BASE_URL',
+        defaultValue: 'http://localhost:5000/api'),
+  );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _universityIdController = TextEditingController();
   bool _isPasswordVisible = false;
-  
+
   // Error state variables
   String? _emailError;
   String? _nameError;
   String? _passwordError;
+  String? _universityIdError;
   String? _generalError;
 
   double _strength = 0.0;
@@ -32,6 +38,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
     style: TextStyle(
         color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
   );
+
+  @override
+  void initState() {
+    super.initState();
+    // Add listener to sanitize university ID input
+    _universityIdController.addListener(() {
+      final text = _universityIdController.text;
+      final sanitized = text.replaceAll(RegExp(r'[^0-9]'), '');
+      if (text != sanitized) {
+        _universityIdController.value = TextEditingValue(
+          text: sanitized,
+          selection: TextSelection.collapsed(offset: sanitized.length),
+        );
+      }
+    });
+  }
 
   void _checkPasswordStrength(String password) {
     double strength = 0.0;
@@ -60,6 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _emailError = null;
       _nameError = null;
       _passwordError = null;
+      _universityIdError = null;
       _generalError = null;
     });
 
@@ -73,17 +96,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (_passwordController.text.isEmpty) {
       setState(() => _passwordError = 'Password is required');
     }
+    if (_universityIdController.text.isEmpty) {
+      setState(() => _universityIdError = 'University ID is required');
+    }
 
     // If any field errors, stop here
-    if (_emailError != null || _nameError != null || _passwordError != null) {
+    if (_emailError != null ||
+        _nameError != null ||
+        _passwordError != null ||
+        _universityIdError != null) {
       return;
     }
 
     // Validate institutional email format
     final emailRegex = RegExp(
-      r'^[a-zA-Z]+\.[a-zA-Z]+@aastu(student|staff)\.edu\.et$',
-      caseSensitive: false
-    );
+        r'^[a-zA-Z]+\.[a-zA-Z]+@aastu(student|staff)\.edu\.et$',
+        caseSensitive: false);
     if (!emailRegex.hasMatch(_emailController.text)) {
       setState(() => _emailError = 'Use AASTU institutional email');
       return;
@@ -96,22 +124,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (_passwordController.text.length < 6) {
       setState(() => _passwordError = 'Password must be at least 6 characters');
     }
-    
-    if (_nameError != null || _passwordError != null) {
+    if (_universityIdController.text.length != 6) {
+      setState(() =>
+          _universityIdError = 'University ID must be 6 digits (e.g., 167314)');
+    }
+
+    if (_nameError != null ||
+        _passwordError != null ||
+        _universityIdError != null) {
       return;
     }
+
     try {
       setState(() {
         buttonChild =
             LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
       });
+
+      print('Attempting to register user...');
+      print('Name: ${_nameController.text}');
+      print('Email: ${_emailController.text}');
+      print('University ID: ${_universityIdController.text}');
+      print('API Base URL: ${authService.dio.options.baseUrl}');
+
       // First register the user (this will trigger OTP sending)
       await authService.register(
         _nameController.text,
         _emailController.text,
         _passwordController.text,
+        _universityIdController.text,
       );
-      
+
+      print('Registration successful, showing success message...');
+
+      // Show success feedback before navigation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OTP sent to ${_emailController.text}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      print('Navigating to OTP verification screen...');
+
       // Navigate to OTP verification screen
       Navigator.pushReplacement(
         context,
@@ -123,15 +178,59 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       );
-    } catch (e) {
+    } on DioException catch (e) {
+      print('DioException occurred: ${e.message}');
+      print('Response status: ${e.response?.statusCode}');
+      print('Response data: ${e.response?.data}');
+      print('Error type: ${e.type}');
+
+      String errorMessage = 'Failed to register';
+      if (e.response?.statusCode == 400) {
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection and try again.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMessage =
+            'Could not connect to the server. Please check your internet connection.';
+      }
+
       setState(() {
-        _generalError = e.toString();
+        _generalError = errorMessage;
         buttonChild = const Text(
           "Sign Up",
           style: TextStyle(
               color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
         );
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      print('Unexpected error occurred: $e');
+      print('Error type: ${e.runtimeType}');
+
+      setState(() {
+        _generalError = 'An unexpected error occurred';
+        buttonChild = const Text(
+          "Sign Up",
+          style: TextStyle(
+              color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+        );
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -178,7 +277,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: _emailController,
                             decoration: InputDecoration(
                               hintText: "Email ID",
-                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                              hintStyle: const TextStyle(
+                                  color: Colors.grey, fontSize: 16),
                               enabledBorder: const UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
@@ -204,7 +304,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             controller: _nameController,
                             decoration: InputDecoration(
                               hintText: "Full Name",
-                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                              hintStyle: const TextStyle(
+                                  color: Colors.grey, fontSize: 16),
                               enabledBorder: const UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,
@@ -221,6 +322,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     if (_nameError != null) const SizedBox(height: 5),
                     const SizedBox(height: 10),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Icon(Icons.school, color: Colors.grey),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _universityIdController,
+                            keyboardType: TextInputType.number,
+                            maxLength: 6,
+                            decoration: InputDecoration(
+                              hintText: "University ID (e.g., 167314)",
+                              helperText:
+                                  "Enter only the 6-digit number (e.g., 167314)",
+                              helperStyle: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                              hintStyle: const TextStyle(
+                                  color: Colors.grey, fontSize: 16),
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.grey,
+                                  width: 1.0,
+                                ),
+                              ),
+                              errorText: _universityIdError,
+                              errorStyle: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_universityIdError != null) const SizedBox(height: 5),
+                    const SizedBox(height: 10),
+                    Row(
                       children: [
                         const Icon(Icons.key, color: Colors.grey),
                         const SizedBox(width: 15),
@@ -230,17 +366,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             onChanged: _checkPasswordStrength,
                             decoration: InputDecoration(
                               hintText: "Password",
-                              hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                              hintStyle: const TextStyle(
+                                  color: Colors.grey, fontSize: 16),
                               suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _isPasswordVisible = !_isPasswordVisible;
-                                  });
-                                },
-                                icon: _isPasswordVisible
-                                    ? const Icon(Icons.visibility)
-                                    : const Icon(Icons.visibility_off)
-                              ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isPasswordVisible = !_isPasswordVisible;
+                                    });
+                                  },
+                                  icon: _isPasswordVisible
+                                      ? const Icon(Icons.visibility)
+                                      : const Icon(Icons.visibility_off)),
                               enabledBorder: const UnderlineInputBorder(
                                 borderSide: BorderSide(
                                   color: Colors.grey,

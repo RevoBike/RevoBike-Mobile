@@ -1,146 +1,177 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:revobike/data/models/User.dart';
+import 'package:jwt_decoder/jwt_decoder.dart'; // Add this package
+import '../data/models/User.dart';
 
 class AuthService {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  static const _tokenKey = 'jwt'; // Consistent key name with backend
+  final FlutterSecureStorage _storage;
+  Dio _dio;
 
-  final String _baseUrl = "http://10.0.2.2:5000/api";
-
-  Future<String?> register(String name, String email, String password) async {
-    Dio dio = Dio();
-    Response response = await dio.post('$_baseUrl/users/register', data: {
-      'name': name,
-      'email': email,
-      'password': password,
-    });
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      // Registration successful, OTP sent to email
-      return null;
-    } else if (response.statusCode == 400 || response.statusCode == 401) {
-      final data = json.decode(response.toString());
-      if (data['error'] == 'Email already exists') {
-        throw Exception('Email is already taken');
-      } else if (data['error'] == 'Invalid credentials') {
-        throw Exception('Invalid email or password');
-      }
-      throw Exception('User already exists');
-    } else {
-      throw Exception('Failed to register');
-    }
+  // Use factory constructor for better instance control
+  AuthService({
+    required String baseUrl,
+    FlutterSecureStorage? storage,
+  })  : _storage = storage ?? const FlutterSecureStorage(),
+        _dio = Dio(
+          BaseOptions(
+            baseUrl: baseUrl,
+            connectTimeout: const Duration(seconds: 30),
+            receiveTimeout: const Duration(seconds: 30),
+            headers: {'Content-Type': 'application/json'},
+          ),
+        ) {
+    // Add interceptor for automatic token handling
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        print('Making request to: ${options.uri}');
+        print('Request data: ${options.data}');
+        final token = await _storage.read(key: _tokenKey);
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
+        }
+        return handler.next(options);
+      },
+      onError: (error, handler) async {
+        print('Request error: ${error.message}');
+        print('Error response: ${error.response?.data}');
+        if (error.response?.statusCode == 401) {
+          await _storage.delete(key: _tokenKey);
+        }
+        return handler.next(error);
+      },
+    ));
   }
 
-  Future<String?> login(String email, String password) async {
-    Dio dio = Dio();
-    Response response = await dio.post('$_baseUrl/users/login', data: {
-      'email': email,
-      'password': password,
-    });
+  // Add setter for testing
+  set dio(Dio dio) => _dio = dio;
+  Dio get dio => _dio;
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.toString());
-      String token = data['token'];
-
-      await _storage.write(key: 'jwt_token', value: token);
-
-      return token;
-    } else {
-      throw Exception('Failed to authenticate');
-    }
-  }
-
-  Future<bool> isAuthenticated() async {
-    String? token = await _storage.read(key: 'jwt_token');
-    if (token == null) {
-      return false;
-    }
-
-    bool isExpired = isTokenExpired(token);
-    if (isExpired) {
-      return false;
-    } else {
-      try {
-        await fetchUserProfile();
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }
-  }
-
-  Future<String?> getToken() async {
-    return await _storage.read(key: 'jwt_token');
-  }
-
-  Future<void> logout() async {
+  Future<void> register(
+      String name, String email, String password, String universityId) async {
     try {
-      await _storage.delete(key: 'jwt_token');
-    } catch (e) {
-      print('Failed to delete token');
+      await _dio.post(
+        '/users/register',
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+          'universityId': universityId
+        },
+      );
+    } on DioException catch (e) {
+      throw _handleError(e);
     }
   }
 
-  bool isTokenExpired(String token) {
-    final decodedToken = json.decode(utf8
-        .decode(base64Url.decode(base64Url.normalize(token.split('.')[1]))));
-    final exp = decodedToken['exp'];
-    final expirationDate = DateTime.fromMillisecondsSinceEpoch(exp * 1000);
-
-    return expirationDate.isBefore(DateTime.now());
-  }
-
-  Future<bool> verifyOtp(String email, String otp) async {
-    Dio dio = Dio();
-    Response response = await dio.post('$_baseUrl/users/verify-otp', data: {
-      'email': email,
-      'otp': otp,
-    });
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.toString());
-      String token = data['token'];
-      await _storage.write(key: 'jwt_token', value: token);
-      return true;
-    } else {
-      throw Exception('Invalid OTP');
-    }
-  }
-
-  Future<bool> resendOtp(String email) async {
-    Dio dio = Dio();
-    Response response = await dio.post('$_baseUrl/users/resend-otp', data: {
-      'email': email,
-    });
-
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      throw Exception('Failed to resend OTP');
+  Future<String> login(String email, String password) async {
+    try {
+      final response = await _dio.post(
+        '/users/login',
+        data: {'email': email, 'password': password},
+      );
+      final token = response.data['token'] as String;
+      await _storage.write(key: _tokenKey, value: token);
+      return token;
+    } on DioException catch (e) {
+      throw _handleError(e);
     }
   }
 
   Future<UserModel> fetchUserProfile() async {
-    final token = await getToken();
-    Dio dio = Dio();
+    try {
+      final response = await _dio.get('/users/profile');
+      return UserModel.fromJson(response.data['user']);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
 
-    Response response = await dio.get('$_baseUrl/users/profile',
-        options: Options(
-          headers: {
-            'x-auth-token': token!,
-            'Content-Type': 'application/json',
-          },
-        ));
+  Future<bool> verifyOtp(String email, String otp) async {
+    try {
+      print('Verifying OTP for email: $email');
+      print('Request URL: ${_dio.options.baseUrl}/users/verify-otp');
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to fetch user profile');
+      final response = await _dio.post(
+        '/users/verify-otp',
+        data: {'email': email, 'otp': otp},
+      );
+
+      print('OTP verification response: ${response.data}');
+
+      if (response.data['token'] != null) {
+        await _storage.write(key: _tokenKey, value: response.data['token']);
+        return true;
+      } else {
+        throw Exception('No token received in response');
+      }
+    } on DioException catch (e) {
+      print('DioException in verifyOtp: ${e.message}');
+      print('Error type: ${e.type}');
+      print('Response status: ${e.response?.statusCode}');
+      print('Response data: ${e.response?.data}');
+      throw _handleError(e);
+    } catch (e) {
+      print('Unexpected error in verifyOtp: $e');
+      print('Error type: ${e.runtimeType}');
+      rethrow;
+    }
+  }
+
+  Future<void> logout() async {
+    await _storage.delete(key: _tokenKey);
+    _dio.options.headers.remove('Authorization');
+  }
+
+  Future<bool> get isAuthenticated async {
+    final token = await _storage.read(key: _tokenKey);
+    return token != null && !JwtDecoder.isExpired(token);
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      print('Attempting to delete account...');
+      print('Request URL: ${_dio.options.baseUrl}/users/delete-account');
+
+      await _dio.delete('/users/delete-account');
+
+      print('Account deleted successfully');
+
+      // Clear local storage
+      await _storage.delete(key: _tokenKey);
+      _dio.options.headers.remove('Authorization');
+    } on DioException catch (e) {
+      print('DioException in deleteAccount: ${e.message}');
+      print('Error type: ${e.type}');
+      print('Response status: ${e.response?.statusCode}');
+      print('Response data: ${e.response?.data}');
+      throw _handleError(e);
+    } catch (e) {
+      print('Unexpected error in deleteAccount: $e');
+      print('Error type: ${e.runtimeType}');
+      rethrow;
+    }
+  }
+
+  static Exception _handleError(DioException e) {
+    print('Handling error: ${e.message}');
+    print('Error type: ${e.type}');
+    print('Error response: ${e.response?.data}');
+
+    final response = e.response;
+    if (response != null) {
+      final data = response.data as Map<String, dynamic>?;
+      final message = data?['message'] ?? 'Unknown error occurred';
+      return Exception('$message (${response.statusCode})');
     }
 
-    final data = json.decode(response.toString());
-    final user = UserModel.fromJson(data['user']);
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout) {
+      return Exception(
+          'Connection timeout. Please check your internet connection and try again.');
+    }
 
-    return user;
+    return Exception('Network error: ${e.message}');
   }
 }

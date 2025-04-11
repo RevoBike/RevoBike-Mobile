@@ -14,7 +14,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final AuthService _authService = AuthService();
+  final AuthService _authService = AuthService(
+    baseUrl: const String.fromEnvironment('API_BASE_URL',
+        defaultValue: 'http://localhost:5000/api'),
+  );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;

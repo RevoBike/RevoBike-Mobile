@@ -1,13 +1,10 @@
-import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:revobike/presentation/widget/CustomAppBar.dart';
 import 'package:revobike/presentation/widget/BottomNavBar.dart';
 import 'package:location/location.dart';
 import 'package:revobike/presentation/screens/account/AccountScreen.dart';
 import 'package:revobike/presentation/screens/auth/SignUpScreen.dart';
 import 'package:revobike/presentation/screens/map/MapScreen.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:revobike/presentation/screens/recent/RecentScreen.dart';
 import 'package:revobike/presentation/screens/stations/StationScreen.dart';
 
@@ -41,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
         backgroundColor: Colors.white,
         extendBody: true,
-        appBar: CustomAppBar(
+        appBar: const CustomAppBar(
           title: 'RevoBike',
         ),
         body: IndexedStack(

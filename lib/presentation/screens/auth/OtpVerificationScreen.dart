@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
+import 'package:dio/dio.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -22,10 +23,14 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final AuthService authService = AuthService();
+  final AuthService authService = AuthService(
+    baseUrl: const String.fromEnvironment('API_BASE_URL',
+        defaultValue: 'http://localhost:5000/api'),
+  );
   final List<TextEditingController> _otpControllers =
       List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(6, (index) => FocusNode());
+  final List<FocusNode> _otpFocusNodes =
+      List.generate(6, (index) => FocusNode());
   bool _isVerifying = false;
   bool _isResending = false;
 
@@ -86,8 +91,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
       });
 
+      print('Verifying OTP for email: ${widget.email}');
+      print('Using API URL: ${authService.dio.options.baseUrl}');
+
       // Verify OTP with backend
       await authService.verifyOtp(widget.email, otp);
+
+      print('OTP verification successful');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email verified successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
 
       Navigator.pushReplacement(
         context,
@@ -95,10 +112,38 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           builder: (context) => const LoginScreen(),
         ),
       );
-    } catch (e) {
+    } on DioException catch (e) {
+      print('OTP verification failed: ${e.message}');
+      print('Error type: ${e.type}');
+      print('Response status: ${e.response?.statusCode}');
+      print('Response data: ${e.response?.data}');
+
+      String errorMessage = 'Failed to verify OTP';
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection and try again.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMessage =
+            'Could not connect to the server. Please check your internet connection.';
+      } else if (e.response?.statusCode == 400) {
+        errorMessage = e.response?.data['message'] ?? errorMessage;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      print('Unexpected error during OTP verification: $e');
+      print('Error type: ${e.runtimeType}');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -106,7 +151,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       setState(() {
         _isVerifying = false;
         buttonChild = const Text(
-          "Verify OTP",
+          "Verify",
           style: TextStyle(
               color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
         );
@@ -221,7 +266,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ElevatedButton(
                 onPressed: _isVerifying ? null : _verifyOtp,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
                   backgroundColor: Colors.blueAccent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -233,16 +279,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               SizedBox(
                 width: 120,
                 child: TextButton(
-                  onPressed: (_isResending || _countdown > 0) ? null : _resendOtp,
-                  child: _countdown > 0 
-                    ? Text(
-                        'Resend in $_countdown',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                      )
-                    : resendButtonChild,
+                  onPressed:
+                      (_isResending || _countdown > 0) ? null : _resendOtp,
+                  child: _countdown > 0
+                      ? Text(
+                          'Resend in $_countdown',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                          ),
+                        )
+                      : resendButtonChild,
                 ),
               ),
             ],

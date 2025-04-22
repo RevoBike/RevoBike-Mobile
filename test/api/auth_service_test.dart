@@ -110,7 +110,7 @@ void main() {
       when(mockStorage.write(
         key: 'jwt',
         value: token,
-      )).thenAnswer((_) async => null);
+      )).thenAnswer((_) async {});
 
       // Act
       final result = await authService.login(

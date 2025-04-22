@@ -5,6 +5,7 @@ import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/SignUpScreen.dart';
 import 'package:revobike/presentation/screens/home/HomeScreen.dart';
+import 'package:revobike/presentation/screens/auth/ForgotPasswordScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -170,13 +171,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      "Forgot Password?",
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Colors.blueAccent,
-                          fontSize: 14),
-                      textAlign: TextAlign.end,
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () {
+                           Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ForgotPasswordScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "Forgot Password?",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.blueAccent,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(

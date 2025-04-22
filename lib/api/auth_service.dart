@@ -75,6 +75,35 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> sendPasswordResetLink(String email) async {
+    try {
+      final response = await _dio.post(
+        '/users/forgot-password',
+        data: {'email': email},
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Response> resetPassword(
+      String email, String otp, String newPassword) async {
+    try {
+      final response = await _dio.post(
+        '/users/reset-password',
+        data: {
+          'email': email,
+          'otp': otp,
+          'newPassword': newPassword,
+        },
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<String> login(String email, String password) async {
     try {
       final response = await _dio.post(

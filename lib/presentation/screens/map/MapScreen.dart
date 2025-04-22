@@ -363,7 +363,7 @@ class _MapScreenState extends State<MapScreen> {
   Station getStationFromMarkerId(String markerId) {
     switch (markerId) {
       case 'Meskel Square Station':
-        return Station(
+        return const Station(
           id: '1',
           name: 'Meskel Square Station',
           location: 'Meskel Square, Addis Ababa',
@@ -374,7 +374,7 @@ class _MapScreenState extends State<MapScreen> {
           status: 'open',
         );
       case 'Tor Hayloch Station':
-        return Station(
+        return const Station(
           id: '2',
           name: 'Tor Hayloch Station',
           location: 'Tor Hayloch, Addis Ababa',
@@ -385,7 +385,7 @@ class _MapScreenState extends State<MapScreen> {
           status: 'open',
         );
       case 'Saris Abo Station':
-        return Station(
+        return const Station(
           id: '3',
           name: 'Saris Abo Station',
           location: 'Saris Abo, Addis Ababa',
@@ -396,7 +396,7 @@ class _MapScreenState extends State<MapScreen> {
           status: 'open',
         );
       default:
-        return Station(
+        return const Station(
           id: '0',
           name: 'Unknown Station',
           location: 'Unknown Location',

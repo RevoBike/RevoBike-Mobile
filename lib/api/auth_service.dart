@@ -47,18 +47,29 @@ class AuthService {
   set dio(Dio dio) => _dio = dio;
   Dio get dio => _dio;
 
-  Future<void> register(
-      String name, String email, String password, String universityId) async {
+  Future<Map<String, dynamic>> register(String name, String email,
+      String password, String universityId, String phoneNumber) async {
     try {
-      await _dio.post(
+      final response = await _dio.post(
         '/users/register',
         data: {
           'name': name,
           'email': email,
           'password': password,
+          'phone_number': phoneNumber,
           'universityId': universityId
         },
       );
+
+      if (response.data['success'] == true) {
+        return {
+          'success': true,
+          'message': response.data['message'],
+          'user': response.data['user']
+        };
+      } else {
+        throw Exception(response.data['message'] ?? 'Registration failed');
+      }
     } on DioException catch (e) {
       throw _handleError(e);
     }

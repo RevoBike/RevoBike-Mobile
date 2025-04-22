@@ -22,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _universityIdController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
   bool _isPasswordVisible = false;
 
   // Error state variables
@@ -29,6 +30,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _nameError;
   String? _passwordError;
   String? _universityIdError;
+  String? _phoneNumberError;
   String? _generalError;
 
   double _strength = 0.0;
@@ -48,6 +50,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final sanitized = text.replaceAll(RegExp(r'[^0-9]'), '');
       if (text != sanitized) {
         _universityIdController.value = TextEditingValue(
+          text: sanitized,
+          selection: TextSelection.collapsed(offset: sanitized.length),
+        );
+      }
+    });
+
+    // Add listener to sanitize phone number input
+    _phoneNumberController.addListener(() {
+      final text = _phoneNumberController.text;
+      // Allow only digits and optional leading +
+      final sanitized = text.replaceAll(RegExp(r'[^\d+]'), '');
+      if (text != sanitized) {
+        _phoneNumberController.value = TextEditingValue(
           text: sanitized,
           selection: TextSelection.collapsed(offset: sanitized.length),
         );
@@ -83,6 +98,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _nameError = null;
       _passwordError = null;
       _universityIdError = null;
+      _phoneNumberError = null;
       _generalError = null;
     });
 
@@ -99,12 +115,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (_universityIdController.text.isEmpty) {
       setState(() => _universityIdError = 'University ID is required');
     }
+    if (_phoneNumberController.text.isEmpty) {
+      setState(() => _phoneNumberError = 'Phone number is required');
+    }
 
     // If any field errors, stop here
     if (_emailError != null ||
         _nameError != null ||
         _passwordError != null ||
-        _universityIdError != null) {
+        _universityIdError != null ||
+        _phoneNumberError != null) {
       return;
     }
 
@@ -114,6 +134,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         caseSensitive: false);
     if (!emailRegex.hasMatch(_emailController.text)) {
       setState(() => _emailError = 'Use AASTU institutional email');
+      return;
+    }
+
+    // Validate Ethiopian phone number format
+    final phoneRegex = RegExp(r'^0[79]\d{8}$');
+    if (!phoneRegex.hasMatch(_phoneNumberController.text)) {
+      setState(() => _phoneNumberError =
+          'Enter a valid Ethiopian phone number starting with 09 or 07 (10 digits total)');
       return;
     }
 
@@ -131,7 +159,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (_nameError != null ||
         _passwordError != null ||
-        _universityIdError != null) {
+        _universityIdError != null ||
+        _phoneNumberError != null) {
       return;
     }
 
@@ -145,14 +174,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
       print('Name: ${_nameController.text}');
       print('Email: ${_emailController.text}');
       print('University ID: ${_universityIdController.text}');
+      print('Phone Number: ${_phoneNumberController.text}');
       print('API Base URL: ${authService.dio.options.baseUrl}');
 
       // First register the user (this will trigger OTP sending)
-      await authService.register(
+      final response = await authService.register(
         _nameController.text,
         _emailController.text,
         _passwordController.text,
         _universityIdController.text,
+        _phoneNumberController.text,
       );
 
       print('Registration successful, showing success message...');
@@ -160,7 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Show success feedback before navigation
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('OTP sent to ${_emailController.text}'),
+          content: Text(response['message']),
           backgroundColor: Colors.green,
         ),
       );
@@ -276,7 +307,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              hintText: "Email ID",
+                              hintText: "University Email",
                               hintStyle: const TextStyle(
                                   color: Colors.grey, fontSize: 16),
                               enabledBorder: const UnderlineInputBorder(
@@ -332,9 +363,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             keyboardType: TextInputType.number,
                             maxLength: 6,
                             decoration: InputDecoration(
-                              hintText: "University ID (e.g., 167314)",
+                              hintText: "University ID without slash ",
                               helperText:
-                                  "Enter only the 6-digit number (e.g., 167314)",
+                                  "Enter only the 6-digit number (e.g., 000114)",
                               helperStyle: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12,
@@ -355,6 +386,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     if (_universityIdError != null) const SizedBox(height: 5),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Icon(Icons.phone, color: Colors.grey),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _phoneNumberController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: "Phone Number (e.g., 0912345678)",
+                              helperText:
+                                  "Enter your Ethiopian phone number starting with 09 or 07 (10 digits total)",
+                              helperStyle: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                              hintStyle: const TextStyle(
+                                  color: Colors.grey, fontSize: 16),
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.grey,
+                                  width: 1.0,
+                                ),
+                              ),
+                              errorText: _phoneNumberError,
+                              errorStyle: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (_phoneNumberError != null) const SizedBox(height: 5),
                     const SizedBox(height: 10),
                     Row(
                       children: [

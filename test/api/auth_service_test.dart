@@ -4,7 +4,6 @@ import 'package:mockito/annotations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:revobike/api/auth_service.dart';
-import 'package:revobike/data/models/User.dart';
 
 // Generate mocks
 @GenerateMocks([Dio, FlutterSecureStorage])

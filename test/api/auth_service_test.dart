@@ -37,7 +37,8 @@ void main() {
           'name': 'Test User',
           'email': 'test@aastustudent.edu.et',
           'password': 'password123',
-          'universityId': '12345'
+          'universityId': '12345',
+          'phone_number': '0912345678',
         },
       )).thenAnswer((_) async => Response(
             requestOptions: RequestOptions(path: '/users/register'),
@@ -50,6 +51,7 @@ void main() {
         'test@aastustudent.edu.et',
         'password123',
         '12345',
+        '0912345678',
       );
 
       // Assert
@@ -59,7 +61,8 @@ void main() {
           'name': 'Test User',
           'email': 'test@aastustudent.edu.et',
           'password': 'password123',
-          'universityId': '12345'
+          'universityId': '12345',
+          'phone_number': '0912345678',
         },
       )).called(1);
     });
@@ -85,6 +88,7 @@ void main() {
           'test@aastustudent.edu.et',
           'password123',
           '12345',
+          '0912345678',
         ),
         throwsException,
       );

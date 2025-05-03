@@ -183,11 +183,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
-                        child: const Text(
+                            child: const Text(
                           "Forgot Password?",
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            color: Colors.blueAccent,
+                            color: Color(0xFF154B1A),
                             fontSize: 14,
                           ),
                         ),
@@ -198,9 +198,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         _validateAndLogin();
                       },
-                      style: ElevatedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: const Color(0xFF154B1A),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -219,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                             child: const Text("Register",
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Color(0xFF154B1A),
                                   fontWeight: FontWeight.bold,
                                 )))
                       ],

@@ -126,7 +126,7 @@ class _StationScreenState extends State<StationScreen> {
                       const Icon(
                         FontAwesomeIcons.locationDot,
                         size: 16,
-                        color: Colors.blue,
+                        color: Color(0xFF154B1A),
                       ),
                       const SizedBox(width: 8),
                       Text(station.location,
@@ -138,30 +138,30 @@ class _StationScreenState extends State<StationScreen> {
                   Row(
                     children: [
                       const Icon(FontAwesomeIcons.bicycle,
-                          size: 16, color: Colors.blue),
+                          size: 16, color: Color(0xFF154B1A)),
                       const SizedBox(width: 8),
                       Text("${station.availableBikes} Bikes Available",
                           style: const TextStyle(
-                              fontSize: 14, color: Colors.blueGrey)),
+                              fontSize: 14, color: Color(0xB3154B1A))),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       const Icon(FontAwesomeIcons.route,
-                          size: 16, color: Colors.blue),
+                          size: 16, color: Color(0xFF154B1A)),
                       const SizedBox(width: 8),
                       Text(
                           "${station.latitude.toStringAsFixed(2)}, ${station.longitude.toStringAsFixed(2)}",
                           style: const TextStyle(
-                              fontSize: 14, color: Colors.blueGrey)),
+                              fontSize: 14, color: Color(0xB3154B1A))),
                       const Spacer(),
                       const Icon(FontAwesomeIcons.dollarSign,
-                          size: 16, color: Colors.blue),
+                          size: 16, color: Color(0xFF154B1A)),
                       const SizedBox(width: 8),
                       Text("Br.${station.rate}/km",
                           style: const TextStyle(
-                              fontSize: 14, color: Colors.blueGrey)),
+                              fontSize: 14, color: Color(0xB3154B1A))),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -181,13 +181,13 @@ class _StationScreenState extends State<StationScreen> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 side: const BorderSide(
-                                  color: Colors.blue,
+                                  color: Color(0xFF154B1A),
                                   width: 1.0,
                                 )),
                           ),
                           child: const Text("View",
                               style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Color(0xFF154B1A),
                                   fontWeight: FontWeight.bold)),
                         ),
                       ),
@@ -203,7 +203,7 @@ class _StationScreenState extends State<StationScreen> {
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: station.status == "open"
-                                ? Colors.blue
+                                ? const Color(0xFF154B1A)
                                 : Colors.grey,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),

@@ -453,8 +453,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   color: _strength == 1.0
                                       ? Colors.green
                                       : _strength >= 0.75
-                                          ? Colors.blue
-                                          : _strength >= 0.5
+                                  ? const Color(0xFF154B1A)
+                                  : _strength >= 0.5
                                               ? Colors.orange
                                               : Colors.red,
                                   width: 1.0,
@@ -476,7 +476,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: const Color(0xFF154B1A),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -493,9 +493,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               Navigator.of(context).push(MaterialPageRoute(
                                   builder: (context) => const LoginScreen()));
                             },
-                            child: const Text("Login",
+                        child: const Text("Login",
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Color(0xFF154B1A),
                                   fontWeight: FontWeight.bold,
                                 )))
                       ],

@@ -12,9 +12,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'RevoBike',
+      title: 'StepGreen',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF154B1A)),
         useMaterial3: true,
         textTheme: GoogleFonts.rubikTextTheme(),
       ),
@@ -42,16 +42,26 @@ class SplashScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'RevoBike',
+              'StepGreen',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue,
+                color: Color(0xFF154B1A),
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Energy is free',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                fontStyle: FontStyle.italic,
+                color: Color(0xFF154B1A),
               ),
             ),
             SizedBox(height: 20),
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF154B1A)),
             ),
           ],
         ),

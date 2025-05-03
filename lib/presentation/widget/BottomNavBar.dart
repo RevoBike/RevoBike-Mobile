@@ -33,25 +33,25 @@ class CustomBottomNavBar extends StatelessWidget {
       items: [
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.house,
-          selectedColor: Colors.blueAccent,
+          selectedColor: const Color(0xFF154B1A),
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.house,
         ),
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.chargingStation,
-          selectedColor: Colors.blueAccent,
+          selectedColor: const Color(0xFF154B1A),
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.chargingStation,
         ),
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.clockRotateLeft,
-          selectedColor: Colors.blueAccent,
+          selectedColor: const Color(0xFF154B1A),
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.clockRotateLeft,
         ),
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.userGear,
-          selectedColor: Colors.blueAccent,
+          selectedColor: const Color(0xFF154B1A),
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.userGear,
         ),

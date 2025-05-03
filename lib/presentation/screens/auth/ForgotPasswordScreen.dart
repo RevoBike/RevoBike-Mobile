@@ -138,7 +138,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 onPressed: _isLoading ? null : _sendResetLink,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: const Color(0xFF154B1A),
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)

@@ -43,7 +43,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget resendButtonChild = const Text(
     "Resend OTP",
     style: TextStyle(
-        color: Colors.blue, fontSize: 15, fontWeight: FontWeight.w600),
+        color: Color(0xFF154B1A), fontSize: 15, fontWeight: FontWeight.w600),
   );
   int _countdown = 60;
   late Timer _timer;
@@ -247,8 +247,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                         enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.grey),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.blue),
+                          focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF154B1A)),
                         ),
                       ),
                       onChanged: (value) {
@@ -268,7 +268,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 style: ElevatedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: const Color(0xFF154B1A),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

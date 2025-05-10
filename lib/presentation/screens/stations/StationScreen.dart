@@ -13,10 +13,12 @@ class StationScreen extends StatefulWidget {
 }
 
 class _StationScreenState extends State<StationScreen> {
+/*
   final StationService _stationService = StationService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: 'http://localhost:5000/api'),
   );
+*/
   List<Station> _stations = [];
   bool _isLoading = true;
   String? _error;
@@ -34,7 +36,9 @@ class _StationScreenState extends State<StationScreen> {
         _error = null;
       });
 
-      final stations = await _stationService.getStations();
+      // Simulate loading stations with empty list for smooth UI flow
+      await Future.delayed(const Duration(seconds: 1));
+      final stations = <Station>[];
 
       setState(() {
         _stations = stations;

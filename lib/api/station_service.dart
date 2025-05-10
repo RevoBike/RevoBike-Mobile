@@ -1,3 +1,4 @@
+/*
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../data/models/Station.dart';
@@ -21,17 +22,17 @@ class StationService {
     // Add interceptor for automatic token handling
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        print('Making request to: ${options.uri}');
-        print('Request data: ${options.data}');
+        print('Making request to: \${options.uri}');
+        print('Request data: \${options.data}');
         final token = await _storage.read(key: 'jwt');
         if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
+          options.headers['Authorization'] = 'Bearer \$token';
         }
         return handler.next(options);
       },
       onError: (error, handler) async {
-        print('Request error: ${error.message}');
-        print('Error response: ${error.response?.data}');
+        print('Request error: \${error.message}');
+        print('Error response: \${error.response?.data}');
         if (error.response?.statusCode == 401) {
           await _storage.delete(key: 'jwt');
         }
@@ -47,11 +48,11 @@ class StationService {
   Future<List<Station>> getStations() async {
     try {
       print('Fetching stations...');
-      print('Request URL: ${_dio.options.baseUrl}/stations');
+      print('Request URL: \${_dio.options.baseUrl}/stations');
 
       final response = await _dio.get('/stations');
 
-      print('Stations response: ${response.data}');
+      print('Stations response: \${response.data}');
 
       if (response.data['success'] == true && response.data['data'] != null) {
         final List<dynamic> stationsJson = response.data['data'];
@@ -60,14 +61,14 @@ class StationService {
         throw Exception('No stations found in response');
       }
     } on DioException catch (e) {
-      print('DioException in getStations: ${e.message}');
-      print('Error type: ${e.type}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
+      print('DioException in getStations: \${e.message}');
+      print('Error type: \${e.type}');
+      print('Response status: \${e.response?.statusCode}');
+      print('Response data: \${e.response?.data}');
       throw _handleError(e);
     } catch (e) {
-      print('Unexpected error in getStations: $e');
-      print('Error type: ${e.runtimeType}');
+      print('Unexpected error in getStations: \$e');
+      print('Error type: \${e.runtimeType}');
       rethrow;
     }
   }
@@ -90,3 +91,4 @@ class StationService {
     }
   }
 }
+*/

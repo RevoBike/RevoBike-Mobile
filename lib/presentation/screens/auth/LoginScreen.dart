@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+/*
 import 'package:revobike/api/auth_service.dart';
+*/
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/SignUpScreen.dart';
 import 'package:revobike/presentation/screens/home/HomeScreen.dart';
@@ -15,10 +17,12 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+/*
   final AuthService _authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: 'http://localhost:5000/api'),
   );
+*/
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -34,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
         color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
   );
 
+/*
   void _validateAndLogin() async {
     setState(() {
       _errorMessage = '';
@@ -43,36 +48,28 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (_emailError == null && _passwordError == null) {
-      try {
-        setState(() {
-          buttonChild =
-              LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
-        });
-        await _authService.login(
-          _emailController.text,
-          _passwordController.text,
+      setState(() {
+        buttonChild = const Text(
+          "Login",
+          style: TextStyle(
+              color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
         );
-        UserModel user = await _authService.fetchUserProfile();
-        print(user); // Successfully logged in user profile
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      } catch (e) {
-        setState(() {
-          _errorMessage = e.toString(); // Display specific error message
-        });
-      } finally {
-        setState(() {
-          buttonChild = const Text(
-            "Login",
-            style: TextStyle(
-                color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-          );
-        });
-      }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
     }
   }
+*/
 
   @override
   void dispose() {
@@ -195,9 +192,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(
-                      onPressed: () {
-                        _validateAndLogin();
-                      },
+                      // onPressed: () {
+                      //   _validateAndLogin();
+                      // },
+                      onPressed: null,
                         style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         backgroundColor: const Color(0xFF154B1A),

@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+/*
 import 'package:revobike/api/auth_service.dart';
+*/
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:dio/dio.dart';
 
@@ -23,10 +25,12 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+/*
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: 'http://localhost:5000/api'),
   );
+*/
   final List<TextEditingController> _otpControllers =
       List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _otpFocusNodes =
@@ -84,79 +88,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       return;
     }
 
-    try {
-      setState(() {
-        _isVerifying = true;
-        buttonChild =
-            LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
-      });
-
-      print('Verifying OTP for email: ${widget.email}');
-      print('Using API URL: ${authService.dio.options.baseUrl}');
-
-      // Verify OTP with backend
-      await authService.verifyOtp(widget.email, otp);
-
-      print('OTP verification successful');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email verified successfully!'),
-          backgroundColor: Colors.green,
-        ),
+    setState(() {
+      _isVerifying = false;
+      buttonChild = const Text(
+        "Verify",
+        style: TextStyle(
+            color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
       );
+    });
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
-        ),
-      );
-    } on DioException catch (e) {
-      print('OTP verification failed: ${e.message}');
-      print('Error type: ${e.type}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Email verified successfully!'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-      String errorMessage = 'Failed to verify OTP';
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        errorMessage =
-            'Connection timeout. Please check your internet connection and try again.';
-      } else if (e.type == DioExceptionType.connectionError) {
-        errorMessage =
-            'Could not connect to the server. Please check your internet connection.';
-      } else if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } catch (e) {
-      print('Unexpected error during OTP verification: $e');
-      print('Error type: ${e.runtimeType}');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isVerifying = false;
-        buttonChild = const Text(
-          "Verify",
-          style: TextStyle(
-              color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-        );
-      });
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LoginScreen(),
+      ),
+    );
   }
 
   void _resendOtp() async {

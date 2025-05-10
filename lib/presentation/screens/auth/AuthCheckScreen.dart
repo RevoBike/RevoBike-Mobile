@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+/*
 import 'package:revobike/api/auth_service.dart';
+*/
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/home/HomeScreen.dart';
@@ -13,14 +15,17 @@ class AuthCheckScreen extends StatefulWidget {
 }
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
+/*
   final AuthService _authService =
       AuthService(baseUrl: "http://10.0.2.2:5000/api");
+*/
   @override
   void initState() {
     super.initState();
-    _checkAuthentication();
+    // _checkAuthentication();
   }
 
+/*
   Future<void> _checkAuthentication() async {
     bool isAuthenticated = await _authService.isAuthenticated;
 
@@ -37,6 +42,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       );
     }
   }
+*/
 
   @override
   Widget build(BuildContext context) {

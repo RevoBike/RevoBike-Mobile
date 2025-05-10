@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+/*
 import 'package:revobike/api/auth_service.dart';
 import 'package:dio/dio.dart';
+*/
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
 
@@ -14,10 +16,12 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  /*
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: 'http://localhost:5000/api'),
   );
+  */
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -164,105 +168,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return;
     }
 
-    try {
-      setState(() {
-        buttonChild =
-            LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
-      });
-
-      print('Attempting to register user...');
-      print('Name: ${_nameController.text}');
-      print('Email: ${_emailController.text}');
-      print('University ID: ${_universityIdController.text}');
-      print('Phone Number: ${_phoneNumberController.text}');
-      print('API Base URL: ${authService.dio.options.baseUrl}');
-
-      // First register the user (this will trigger OTP sending)
-      final response = await authService.register(
-        _nameController.text,
-        _emailController.text,
-        _passwordController.text,
-        _universityIdController.text,
-        _phoneNumberController.text,
+    setState(() {
+      buttonChild = const Text(
+        "Sign Up",
+        style: TextStyle(
+            color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
       );
+    });
 
-      print('Registration successful, showing success message...');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registration successful!'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-      // Show success feedback before navigation
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response['message']),
-          backgroundColor: Colors.green,
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OtpVerificationScreen(
+          email: _emailController.text,
+          name: _nameController.text,
+          password: _passwordController.text,
         ),
-      );
-
-      print('Navigating to OTP verification screen...');
-
-      // Navigate to OTP verification screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(
-            email: _emailController.text,
-            name: _nameController.text,
-            password: _passwordController.text,
-          ),
-        ),
-      );
-    } on DioException catch (e) {
-      print('DioException occurred: ${e.message}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
-      print('Error type: ${e.type}');
-
-      String errorMessage = 'Failed to register';
-      if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        errorMessage =
-            'Connection timeout. Please check your internet connection and try again.';
-      } else if (e.type == DioExceptionType.connectionError) {
-        errorMessage =
-            'Could not connect to the server. Please check your internet connection.';
-      }
-
-      setState(() {
-        _generalError = errorMessage;
-        buttonChild = const Text(
-          "Sign Up",
-          style: TextStyle(
-              color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-        );
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } catch (e) {
-      print('Unexpected error occurred: $e');
-      print('Error type: ${e.runtimeType}');
-
-      setState(() {
-        _generalError = 'An unexpected error occurred';
-        buttonChild = const Text(
-          "Sign Up",
-          style: TextStyle(
-              color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-        );
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -471,9 +401,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     if (_passwordError != null) const SizedBox(height: 5),
                     const SizedBox(height: 30),
                     ElevatedButton(
-                      onPressed: () {
-                        validateAndRegister();
-                      },
+                      // onPressed: () {
+                      //   validateAndRegister();
+                      // },
+                      onPressed: null,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         backgroundColor: const Color(0xFF154B1A),

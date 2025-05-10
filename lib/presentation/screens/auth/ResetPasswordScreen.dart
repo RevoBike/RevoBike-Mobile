@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+/*
 import 'package:revobike/api/auth_service.dart';
+*/
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:dio/dio.dart';
 
@@ -16,10 +18,12 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+/*
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: 'http://localhost:5000/api'),
   );
+*/
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -40,6 +44,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
+/*
   Future<void> _resetPassword() async {
     // Clear previous errors
     setState(() {
@@ -106,6 +111,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       setState(() => _isLoading = false);
     }
   }
+*/
 
   @override
   Widget build(BuildContext context) {
@@ -190,7 +196,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ],
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isLoading ? null : _resetPassword,
+                // onPressed: _isLoading ? null : _resetPassword,
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: Colors.blueAccent,

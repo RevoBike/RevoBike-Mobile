@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+/*
 import 'package:revobike/api/auth_service.dart';
+*/
 import 'package:revobike/presentation/screens/auth/ResetPasswordScreen.dart';
 import 'package:dio/dio.dart';
 
@@ -11,16 +13,19 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+/*
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
         defaultValue: 'http://localhost:5000/api'),
   );
+*/
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
   String? _generalError;
   bool _isLoading = false;
 
-  Future<void> _sendResetLink() async {
+/*
+  void _sendResetLink() async {
     // Clear previous errors
     setState(() {
       _emailError = null;
@@ -42,50 +47,27 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
-    try {
-      setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-      final response =
-          await authService.sendPasswordResetLink(_emailController.text);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Password reset link sent successfully!'),
+        backgroundColor: Colors.green,
+      ),
+    );
 
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response['message']),
-          backgroundColor: Colors.green,
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResetPasswordScreen(
+          email: _emailController.text,
         ),
-      );
+      ),
+    );
 
-      // Navigate to reset password screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ResetPasswordScreen(
-            email: _emailController.text,
-          ),
-        ),
-      );
-    } on DioException catch (e) {
-      String errorMessage = 'Failed to send reset link';
-      if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        errorMessage =
-            'Connection timeout. Please check your internet connection and try again.';
-      } else if (e.type == DioExceptionType.connectionError) {
-        errorMessage =
-            'Could not connect to the server. Please check your internet connection.';
-      }
-
-      setState(() => _generalError = errorMessage);
-    } catch (e) {
-      setState(() => _generalError = 'An unexpected error occurred');
-    } finally {
-      setState(() => _isLoading = false);
-    }
+    setState(() => _isLoading = false);
   }
+*/
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +117,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ],
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isLoading ? null : _sendResetLink,
+                // onPressed: _isLoading ? null : _sendResetLink,
+                onPressed: null,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: const Color(0xFF154B1A),

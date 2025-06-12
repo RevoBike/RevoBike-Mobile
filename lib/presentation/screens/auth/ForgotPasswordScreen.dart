@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/ResetPasswordScreen.dart';
 import 'package:dio/dio.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -13,7 +15,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'http://localhost:5000/api'),
+        defaultValue: 'https://backend-ge4m.onrender.com'),
   );
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
@@ -91,7 +93,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+        title: const Text(
+          'Forgot Password',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -100,6 +105,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
+              Center(
+                child: SvgPicture.asset(
+                  "assets/images/Forgot_password.svg",
+                  width: MediaQuery.of(context).size.width / 1.2,
+                  height: MediaQuery.of(context).size.height / 2.7,
+                ),
+              ),
+              const SizedBox(height: 20),
               const Text(
                 'Reset Password',
                 style: TextStyle(
@@ -120,10 +133,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.alternate_email,
+                      color: AppColors.primaryGreen),
                   labelText: 'Email',
-                  hintText: 'Enter your AASTU email',
+                  hintText: 'name.fathername@aastustudent.edu.et',
                   errorText: _emailError,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25.0),
+                  ),
                 ),
               ),
               if (_generalError != null) ...[
@@ -137,8 +154,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _sendResetLink,
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blueAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  backgroundColor: AppColors.secondaryGreen,
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)

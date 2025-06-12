@@ -5,6 +5,7 @@ import 'package:revobike/api/auth_service.dart';
 import 'package:dio/dio.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -16,7 +17,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'http://localhost:5000/api'),
+        defaultValue: 'https://backend-ge4m.onrender.com'),
   );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -273,12 +274,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 30),
               Center(
                 child: SvgPicture.asset(
-                  "assets/images/signup_image.svg",
+                  "assets/images/signup_bike.svg",
                   width: MediaQuery.of(context).size.width / 1.2,
                   height: MediaQuery.of(context).size.height / 2.7,
                 ),
@@ -301,20 +302,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.alternate_email, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
                             controller: _emailController,
                             decoration: InputDecoration(
-                              hintText: "University Email",
+                              prefixIcon: const Icon(Icons.alternate_email,
+                                  color: AppColors.primaryGreen),
+                              labelText: "University Email",
+                              hintText: "name.fathername@aastustudent.edu.et",
                               hintStyle: const TextStyle(
                                   color: Colors.grey, fontSize: 16),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                                borderSide: const BorderSide(),
                               ),
                               errorText: _emailError,
                               errorStyle: const TextStyle(color: Colors.red),
@@ -324,24 +325,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     if (_emailError != null) const SizedBox(height: 5),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.face, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
                             controller: _nameController,
                             decoration: InputDecoration(
-                              hintText: "Full Name",
+                              prefixIcon: const Icon(Icons.face,
+                                  color: AppColors.primaryGreen),
+                              labelText: "Full Name",
+                              hintText: "John Doe",
                               hintStyle: const TextStyle(
                                   color: Colors.grey, fontSize: 16),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                                borderSide: const BorderSide(),
                               ),
                               errorText: _nameError,
                               errorStyle: const TextStyle(color: Colors.red),
@@ -351,11 +352,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     if (_nameError != null) const SizedBox(height: 5),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.school, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
@@ -363,20 +363,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             keyboardType: TextInputType.number,
                             maxLength: 6,
                             decoration: InputDecoration(
-                              hintText: "University ID without slash ",
-                              helperText:
-                                  "Enter only the 6-digit number (e.g., 000114)",
+                              prefixIcon: const Icon(Icons.school,
+                                  color: AppColors.primaryGreen),
+                              labelText: "University ID",
+                              hintText: "123414",
+                              helperText: "Enter only the 6-digit number",
                               helperStyle: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12,
                               ),
                               hintStyle: const TextStyle(
                                   color: Colors.grey, fontSize: 16),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                                borderSide: const BorderSide(),
                               ),
                               errorText: _universityIdError,
                               errorStyle: const TextStyle(color: Colors.red),
@@ -386,31 +386,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     if (_universityIdError != null) const SizedBox(height: 5),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.phone, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
                             controller: _phoneNumberController,
                             keyboardType: TextInputType.phone,
                             decoration: InputDecoration(
-                              hintText: "Phone Number (e.g., 0912345678)",
+                              prefixIcon: const Icon(Icons.phone,
+                                  color: AppColors.primaryGreen),
+                              labelText: "Phone Number",
+                              hintText: "0912345678",
                               helperText:
-                                  "Enter your Ethiopian phone number starting with 09 or 07 (10 digits total)",
+                                  "Enter your phone number starting with 09 or 07 (10 digits total)",
                               helperStyle: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12,
                               ),
                               hintStyle: const TextStyle(
                                   color: Colors.grey, fontSize: 16),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                                borderSide: const BorderSide(),
                               ),
                               errorText: _phoneNumberError,
                               errorStyle: const TextStyle(color: Colors.red),
@@ -420,17 +420,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ],
                     ),
                     if (_phoneNumberError != null) const SizedBox(height: 5),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
-                        const Icon(Icons.key, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
                             controller: _passwordController,
                             onChanged: _checkPasswordStrength,
                             decoration: InputDecoration(
-                              hintText: "Password",
+                              prefixIcon: const Icon(Icons.key,
+                                  color: AppColors.primaryGreen),
+                              labelText: "Password",
+                              hintText: "********",
                               hintStyle: const TextStyle(
                                   color: Colors.grey, fontSize: 16),
                               suffixIcon: IconButton(
@@ -442,18 +444,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   icon: _isPasswordVisible
                                       ? const Icon(Icons.visibility)
                                       : const Icon(Icons.visibility_off)),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                                borderSide: const BorderSide(),
                               ),
-                              focusedBorder: UnderlineInputBorder(
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
                                 borderSide: BorderSide(
                                   color: _strength == 1.0
                                       ? Colors.green
                                       : _strength >= 0.75
-                                          ? Colors.blue
+                                          ? AppColors.primaryGreen
                                           : _strength >= 0.5
                                               ? Colors.orange
                                               : Colors.red,
@@ -475,10 +476,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         validateAndRegister();
                       },
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        backgroundColor: AppColors.secondaryGreen,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(25),
                         ),
                       ),
                       child: buttonChild,
@@ -495,7 +496,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                             child: const Text("Login",
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: AppColors.primaryGreen,
                                   fontWeight: FontWeight.bold,
                                 )))
                       ],

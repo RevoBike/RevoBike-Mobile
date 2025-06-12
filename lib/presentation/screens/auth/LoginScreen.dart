@@ -6,6 +6,7 @@ import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/SignUpScreen.dart';
 import 'package:revobike/presentation/screens/home/HomeScreen.dart';
 import 'package:revobike/presentation/screens/auth/ForgotPasswordScreen.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'http://localhost:5000/api'),
+        defaultValue: 'https://backend-ge4m.onrender.com'),
   );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -117,43 +118,43 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.alternate_email, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
-                              hintText: "Email ID",
-                              hintStyle:
-                                  TextStyle(color: Colors.grey, fontSize: 16),
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                  width: 1.0,
-                                ),
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(Icons.alternate_email,
+                                  color: AppColors.primaryGreen),
+                              labelText: "University Email",
+                              hintText: "name.fathername@aastustudent.edu.et",
+                              hintStyle: const TextStyle(
+                                  color: Colors.grey, fontSize: 16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25.0),
+                                borderSide: const BorderSide(),
                               ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
-                        const Icon(Icons.key, color: Colors.grey),
                         const SizedBox(width: 15),
                         Expanded(
                           child: TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
-                                hintText: "Password",
+                                prefixIcon: const Icon(Icons.key,
+                                    color: AppColors.primaryGreen),
+                                labelText: "Password",
+                                hintText: "********",
                                 hintStyle: const TextStyle(
                                     color: Colors.grey, fontSize: 16),
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                    color: Colors.grey,
-                                    width: 1.0,
-                                  ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(25.0),
+                                  borderSide: const BorderSide(),
                                 ),
                                 suffixIcon: IconButton(
                                     onPressed: () {
@@ -175,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
                         onTap: () {
-                           Navigator.push(
+                          Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
@@ -187,22 +188,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           "Forgot Password?",
                           style: TextStyle(
                             fontWeight: FontWeight.w900,
-                            color: Colors.blueAccent,
+                            color: AppColors.secondaryGreen,
                             fontSize: 14,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
                         _validateAndLogin();
                       },
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        backgroundColor: AppColors.secondaryGreen,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(25),
                         ),
                       ),
                       child: buttonChild,
@@ -211,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("New to RevoBike? "),
+                        const Text("New to StepGreen? "),
                         TextButton(
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(
@@ -219,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                             child: const Text("Register",
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: AppColors.primaryGreen,
                                   fontWeight: FontWeight.bold,
                                 )))
                       ],

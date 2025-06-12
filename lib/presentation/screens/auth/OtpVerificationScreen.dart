@@ -5,6 +5,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:dio/dio.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -25,7 +26,7 @@ class OtpVerificationScreen extends StatefulWidget {
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'http://localhost:5000/api'),
+        defaultValue: 'https://backend-ge4m.onrender.com'),
   );
   final List<TextEditingController> _otpControllers =
       List.generate(6, (index) => TextEditingController());
@@ -43,7 +44,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget resendButtonChild = const Text(
     "Resend OTP",
     style: TextStyle(
-        color: Colors.blue, fontSize: 15, fontWeight: FontWeight.w600),
+        color: AppColors.primaryGreen,
+        fontSize: 15,
+        fontWeight: FontWeight.w600),
   );
   int _countdown = 60;
   late Timer _timer;
@@ -189,7 +192,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         resendButtonChild = const Text(
           "Resend OTP",
           style: TextStyle(
-              color: Colors.blue, fontSize: 15, fontWeight: FontWeight.w600),
+              color: AppColors.primaryGreen,
+              fontSize: 15,
+              fontWeight: FontWeight.w600),
         );
       });
     }
@@ -208,7 +213,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               const SizedBox(height: 30),
               Center(
                 child: SvgPicture.asset(
-                  "assets/images/signup_image.svg",
+                  "assets/images/signup_bike.svg",
                   width: MediaQuery.of(context).size.width / 1.2,
                   height: MediaQuery.of(context).size.height / 2.7,
                 ),
@@ -248,7 +253,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           borderSide: BorderSide(color: Colors.grey),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.blue),
+                          borderSide: BorderSide(color: AppColors.primaryGreen),
                         ),
                       ),
                       onChanged: (value) {
@@ -268,9 +273,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 style: ElevatedButton.styleFrom(
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: AppColors.secondaryGreen,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(25),
                   ),
                 ),
                 child: buttonChild,

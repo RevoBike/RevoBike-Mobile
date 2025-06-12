@@ -1,6 +1,7 @@
 import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -33,25 +34,25 @@ class CustomBottomNavBar extends StatelessWidget {
       items: [
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.house,
-          selectedColor: Colors.blueAccent,
+          selectedColor: AppColors.secondaryGreen,
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.house,
         ),
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.chargingStation,
-          selectedColor: Colors.blueAccent,
+          selectedColor: AppColors.secondaryGreen,
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.chargingStation,
         ),
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.clockRotateLeft,
-          selectedColor: Colors.blueAccent,
+          selectedColor: AppColors.secondaryGreen,
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.clockRotateLeft,
         ),
         CrystalNavigationBarItem(
           icon: FontAwesomeIcons.userGear,
-          selectedColor: Colors.blueAccent,
+          selectedColor: AppColors.secondaryGreen,
           unselectedColor: Colors.grey,
           unselectedIcon: FontAwesomeIcons.userGear,
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -11,12 +12,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(
-        title,
-        style: const TextStyle(color: Colors.white),
+      title: const Text(
+        "StepGreen",
+        style: TextStyle(color: Colors.white),
       ),
       centerTitle: true,
-      backgroundColor: Colors.blue,
+      backgroundColor: AppColors.primaryGreen,
       foregroundColor: Colors.white,
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:dio/dio.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -18,7 +19,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'http://localhost:5000/api'),
+        defaultValue: 'https://backend-ge4m.onrender.com'),
   );
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
@@ -193,7 +194,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 onPressed: _isLoading ? null : _resetPassword,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blueAccent,
+                  backgroundColor: AppColors.secondaryGreen,
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)

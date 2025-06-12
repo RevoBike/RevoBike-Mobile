@@ -4,6 +4,7 @@ import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/home/HomeScreen.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class AuthCheckScreen extends StatefulWidget {
   const AuthCheckScreen({super.key});
@@ -14,7 +15,7 @@ class AuthCheckScreen extends StatefulWidget {
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
   final AuthService _authService =
-      AuthService(baseUrl: "http://10.0.2.2:5000/api");
+      AuthService(baseUrl: "https://backend-ge4m.onrender.com");
   @override
   void initState() {
     super.initState();
@@ -44,7 +45,7 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
       backgroundColor: Colors.white,
       body: Center(
           child: LoadingAnimationWidget.fallingDot(
-              color: Colors.blueAccent, size: 35)),
+              color: AppColors.secondaryGreen, size: 35)),
     );
   }
 }

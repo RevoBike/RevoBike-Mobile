@@ -18,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://backend-ge4m.onrender.com'),
+        defaultValue: 'https://revobike-web-3.onrender.com/api'),
   );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();

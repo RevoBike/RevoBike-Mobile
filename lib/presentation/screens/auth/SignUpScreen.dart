@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:revobike/api/auth_service.dart';
-import 'package:dio/dio.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
 import 'package:revobike/constants/app_colors.dart';
@@ -17,7 +16,7 @@ class SignUpScreen extends StatefulWidget {
 class _SignUpScreenState extends State<SignUpScreen> {
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://revobike-web-3.onrender.com/api'),
+        defaultValue: 'https://revobike-web-3.onrender.com'),
   );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -176,7 +175,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       print('Email: ${_emailController.text}');
       print('University ID: ${_universityIdController.text}');
       print('Phone Number: ${_phoneNumberController.text}');
-      print('API Base URL: ${authService.dio.options.baseUrl}');
+      print('API Base URL: ${authService.baseUrl}');
 
       // First register the user (this will trigger OTP sending)
       final response = await authService.register(
@@ -210,46 +209,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         ),
       );
-    } on DioException catch (e) {
-      print('DioException occurred: ${e.message}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
-      print('Error type: ${e.type}');
-
-      String errorMessage = 'Failed to register';
-      if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
-        errorMessage =
-            'Connection timeout. Please check your internet connection and try again.';
-      } else if (e.type == DioExceptionType.connectionError) {
-        errorMessage =
-            'Could not connect to the server. Please check your internet connection.';
-      }
-
-      setState(() {
-        _generalError = errorMessage;
-        buttonChild = const Text(
-          "Sign Up",
-          style: TextStyle(
-              color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
-        );
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
     } catch (e) {
-      print('Unexpected error occurred: $e');
-      print('Error type: ${e.runtimeType}');
+      print('Error occurred: $e');
 
       setState(() {
-        _generalError = 'An unexpected error occurred';
+        _generalError = 'Failed to register. Please try again.';
         buttonChild = const Text(
           "Sign Up",
           style: TextStyle(

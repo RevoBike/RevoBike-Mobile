@@ -1,52 +1,59 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:revobike/api/auth_service.dart';
+import 'dart:convert';
 
 // Generate mocks
-@GenerateMocks([Dio, FlutterSecureStorage])
+@GenerateMocks([FlutterSecureStorage])
 import 'auth_service_test.mocks.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late AuthService authService;
-  late MockDio mockDio;
+  late MockClient mockClient;
   late MockFlutterSecureStorage mockStorage;
-  const baseUrl = 'http://10.0.2.2:5000/api';
+  const baseUrl = 'https://revobike-web-3.onrender.com';
 
   setUp(() {
-    mockDio = MockDio();
+    mockClient = MockClient((request) async {
+      // Default mock response for all requests
+      return http.Response(jsonEncode({'message': 'Default response'}), 200);
+    });
     mockStorage = MockFlutterSecureStorage();
     authService = AuthService(
       baseUrl: baseUrl,
       storage: mockStorage,
+      client: mockClient,
     );
-    // Replace the actual dio instance with our mock
-    authService.dio = mockDio;
   });
 
   group('AuthService Tests', () {
     test('register - successful registration', () async {
       // Arrange
-      when(mockDio.post(
-        '/users/register',
-        data: {
-          'name': 'Test User',
-          'email': 'test@aastustudent.edu.et',
-          'password': 'password123',
-          'universityId': '12345',
-          'phone_number': '0912345678',
-        },
-      )).thenAnswer((_) async => Response(
-            requestOptions: RequestOptions(path: '/users/register'),
-            statusCode: 201,
-          ));
+      final url = Uri.parse('$baseUrl/users/register');
+      mockClient = MockClient((request) async {
+        if (request.url == url && request.method == 'POST') {
+          final body = request.bodyFields;
+          if (body['email'] == 'test@aastustudent.edu.et') {
+            return http.Response(
+                jsonEncode({'message': 'User registered successfully'}), 201);
+          }
+        }
+        return http.Response('Not Found', 404);
+      });
+      authService = AuthService(
+        baseUrl: baseUrl,
+        storage: mockStorage,
+        client: mockClient,
+      );
 
       // Act
-      await authService.register(
+      final response = await authService.register(
         'Test User',
         'test@aastustudent.edu.et',
         'password123',
@@ -55,37 +62,30 @@ void main() {
       );
 
       // Assert
-      verify(mockDio.post(
-        '/users/register',
-        data: {
-          'name': 'Test User',
-          'email': 'test@aastustudent.edu.et',
-          'password': 'password123',
-          'universityId': '12345',
-          'phone_number': '0912345678',
-        },
-      )).called(1);
+      expect(response['message'], 'User registered successfully');
     });
 
     test('register - handles error', () async {
       // Arrange
-      when(mockDio.post(
-        '/users/register',
-        data: anyNamed('data'),
-      )).thenThrow(DioException(
-        requestOptions: RequestOptions(path: '/users/register'),
-        response: Response(
-          requestOptions: RequestOptions(path: '/users/register'),
-          statusCode: 400,
-          data: {'message': 'Email already exists'},
-        ),
-      ));
+      final url = Uri.parse('$baseUrl/users/register');
+      mockClient = MockClient((request) async {
+        if (request.url == url && request.method == 'POST') {
+          return http.Response(
+              jsonEncode({'message': 'Email already exists'}), 400);
+        }
+        return http.Response('Not Found', 404);
+      });
+      authService = AuthService(
+        baseUrl: baseUrl,
+        storage: mockStorage,
+        client: mockClient,
+      );
 
       // Act & Assert
       expect(
         () => authService.register(
           'Test User',
-          'test@aastustudent.edu.et',
+          'test@aastudent.edu.et',
           'password123',
           '12345',
           '0912345678',
@@ -96,24 +96,22 @@ void main() {
 
     test('login - successful login', () async {
       // Arrange
+      final url = Uri.parse('$baseUrl/users/login');
       const token = 'test_token';
-      when(mockDio.post(
-        '/users/login',
-        data: {
-          'email': 'test@aastustudent.edu.et',
-          'password': 'password123',
-        },
-      )).thenAnswer((_) async => Response(
-            requestOptions: RequestOptions(path: '/users/login'),
-            statusCode: 200,
-            data: {'token': token},
-          ));
+      mockClient = MockClient((request) async {
+        if (request.url == url && request.method == 'POST') {
+          return http.Response(jsonEncode({'token': token}), 200);
+        }
+        return http.Response('Not Found', 404);
+      });
+      when(mockStorage.write(key: 'jwt', value: token))
+          .thenAnswer((_) async {});
 
-      // Mock storage write
-      when(mockStorage.write(
-        key: 'jwt',
-        value: token,
-      )).thenAnswer((_) async {});
+      authService = AuthService(
+        baseUrl: baseUrl,
+        storage: mockStorage,
+        client: mockClient,
+      );
 
       // Act
       final result = await authService.login(
@@ -123,32 +121,24 @@ void main() {
 
       // Assert
       expect(result, token);
-      verify(mockDio.post(
-        '/users/login',
-        data: {
-          'email': 'test@aastustudent.edu.et',
-          'password': 'password123',
-        },
-      )).called(1);
-      verify(mockStorage.write(
-        key: 'jwt',
-        value: token,
-      )).called(1);
+      verify(mockStorage.write(key: 'jwt', value: token)).called(1);
     });
 
     test('login - handles error', () async {
       // Arrange
-      when(mockDio.post(
-        '/users/login',
-        data: anyNamed('data'),
-      )).thenThrow(DioException(
-        requestOptions: RequestOptions(path: '/users/login'),
-        response: Response(
-          requestOptions: RequestOptions(path: '/users/login'),
-          statusCode: 401,
-          data: {'message': 'Invalid credentials'},
-        ),
-      ));
+      final url = Uri.parse('$baseUrl/users/login');
+      mockClient = MockClient((request) async {
+        if (request.url == url && request.method == 'POST') {
+          return http.Response(
+              jsonEncode({'message': 'Invalid credentials'}), 401);
+        }
+        return http.Response('Not Found', 404);
+      });
+      authService = AuthService(
+        baseUrl: baseUrl,
+        storage: mockStorage,
+        client: mockClient,
+      );
 
       // Act & Assert
       expect(

@@ -18,7 +18,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://revobike-web-3.onrender.com/api'),
+        defaultValue: 'https://revobike-web-3.onrender.com'),
   );
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -49,10 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
           buttonChild =
               LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
         });
-        await _authService.login(
-          _emailController.text,
-          _passwordController.text,
-        );
+
+        final email = _emailController.text.toString();
+        final password = _passwordController.text.toString();
+
+        await _authService.login(email, password);
         UserModel user = await _authService.fetchUserProfile();
         print(user); // Successfully logged in user profile
         Navigator.pushReplacement(

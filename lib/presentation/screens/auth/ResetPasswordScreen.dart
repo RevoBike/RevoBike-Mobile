@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
-import 'package:dio/dio.dart';
 import 'package:revobike/constants/app_colors.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -71,14 +70,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     try {
       setState(() => _isLoading = true);
 
-      final Response response = await authService.resetPassword(
+      final response = await authService.resetPassword(
         widget.email,
         _otpController.text,
         _newPasswordController.text,
       );
 
-      if (response.statusCode == 200) {
-        // Navigate back to login screen first
+      if (response['message'] != null) {
+        // Assuming success if message exists
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -88,19 +87,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         // Show success message after navigation
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.data['message']),
+            content: Text(response['message']),
             backgroundColor: Colors.green,
           ),
         );
+      } else if (response['error'] != null) {
+        setState(() => _generalError = response['error']);
       } else {
-        setState(() => _generalError = response.data['message']);
+        setState(() => _generalError = 'Failed to reset password');
       }
-    } on DioException catch (e) {
-      String errorMessage = 'Failed to reset password';
-      if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      }
-      setState(() => _generalError = errorMessage);
     } catch (e) {
       setState(() => _generalError = 'An unexpected error occurred');
     } finally {

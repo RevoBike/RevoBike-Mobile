@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/ResetPasswordScreen.dart';
-import 'package:dio/dio.dart';
 import 'package:revobike/constants/app_colors.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -15,7 +14,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final AuthService authService = AuthService(
     baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://revobike-web-3.onrender.com/api'),
+        defaultValue: 'https://backend-ge4m.onrender.com'),
   );
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
@@ -67,23 +66,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
       );
-    } on DioException catch (e) {
+    } catch (e) {
       String errorMessage = 'Failed to send reset link';
-      if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
-      } else if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
+      if (e.toString().contains('timeout')) {
         errorMessage =
             'Connection timeout. Please check your internet connection and try again.';
-      } else if (e.type == DioExceptionType.connectionError) {
+      } else if (e.toString().contains('Failed host lookup')) {
         errorMessage =
             'Could not connect to the server. Please check your internet connection.';
       }
-
       setState(() => _generalError = errorMessage);
-    } catch (e) {
-      setState(() => _generalError = 'An unexpected error occurred');
     } finally {
       setState(() => _isLoading = false);
     }

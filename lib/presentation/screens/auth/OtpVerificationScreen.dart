@@ -4,7 +4,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
-import 'package:dio/dio.dart';
 import 'package:revobike/constants/app_colors.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
@@ -95,7 +94,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       });
 
       print('Verifying OTP for email: ${widget.email}');
-      print('Using API URL: ${authService.dio.options.baseUrl}');
+      print('Using API URL: ${authService.baseUrl}');
 
       // Verify OTP with backend
       await authService.verifyOtp(widget.email, otp);
@@ -115,38 +114,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           builder: (context) => const LoginScreen(),
         ),
       );
-    } on DioException catch (e) {
-      print('OTP verification failed: ${e.message}');
-      print('Error type: ${e.type}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
+    } catch (e) {
+      print('OTP verification failed: $e');
 
       String errorMessage = 'Failed to verify OTP';
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout) {
+      if (e.toString().contains('timeout')) {
         errorMessage =
             'Connection timeout. Please check your internet connection and try again.';
-      } else if (e.type == DioExceptionType.connectionError) {
+      } else if (e.toString().contains('Failed host lookup')) {
         errorMessage =
             'Could not connect to the server. Please check your internet connection.';
-      } else if (e.response?.statusCode == 400) {
-        errorMessage = e.response?.data['message'] ?? errorMessage;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } catch (e) {
-      print('Unexpected error during OTP verification: $e');
-      print('Error type: ${e.runtimeType}');
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );

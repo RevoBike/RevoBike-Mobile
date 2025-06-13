@@ -1,166 +1,141 @@
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart'; // Add this package
+import 'package:jwt_decoder/jwt_decoder.dart';
 import '../data/models/User.dart';
+import 'dart:convert';
 
 class AuthService {
   static const _tokenKey = 'jwt'; // Consistent key name with backend
   final FlutterSecureStorage _storage;
-  Dio _dio;
+  final String baseUrl;
+  final http.Client client;
 
   // Use factory constructor for better instance control
   AuthService({
-    required String baseUrl,
+    required this.baseUrl,
     FlutterSecureStorage? storage,
+    http.Client? client,
   })  : _storage = storage ?? const FlutterSecureStorage(),
-        _dio = Dio(
-          BaseOptions(
-            baseUrl: baseUrl,
-            connectTimeout: const Duration(seconds: 30),
-            receiveTimeout: const Duration(seconds: 30),
-            headers: {'Content-Type': 'application/json'},
-          ),
-        ) {
-    // Add interceptor for automatic token handling
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        print('Making request to: ${options.uri}');
-        print('Request data: ${options.data}');
-        final token = await _storage.read(key: _tokenKey);
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        return handler.next(options);
-      },
-      onError: (error, handler) async {
-        print('Request error: ${error.message}');
-        print('Error response: ${error.response?.data}');
-        if (error.response?.statusCode == 401) {
-          await _storage.delete(key: _tokenKey);
-        }
-        return handler.next(error);
-      },
-    ));
-  }
-
-  // Add setter for testing
-  set dio(Dio dio) => _dio = dio;
-  Dio get dio => _dio;
+        client = client ?? http.Client();
 
   Future<Map<String, dynamic>> register(String name, String email,
       String password, String universityId, String phoneNumber) async {
     try {
-      final response = await _dio.post(
-        '/users/register',
-        data: {
-          'name': name,
-          'email': email,
-          'password': password,
-          'phone_number': phoneNumber,
-          'universityId': universityId
-        },
-      );
+      final url = '$baseUrl/api/users/register';
+      final response = await client.post(Uri.parse(url), body: {
+        'name': name,
+        'email': email,
+        'password': password,
+        'phone_number': phoneNumber,
+        'universityId': universityId
+      });
 
-      if (response.data['success'] == true) {
-        return {
-          'success': true,
-          'message': response.data['message'],
-          'user': response.data['user']
-        };
-      } else {
-        throw Exception(response.data['message'] ?? 'Registration failed');
-      }
-    } on DioException catch (e) {
-      throw _handleError(e);
+      print('Backend response: ${response.body}');
+      return jsonDecode(response.body);
+    } catch (e) {
+      print('Error registering user: $e');
+      rethrow;
     }
   }
 
   Future<Map<String, dynamic>> sendPasswordResetLink(String email) async {
     try {
-      final response = await _dio.post(
-        '/users/forgot-password',
-        data: {'email': email},
-      );
-      return response.data;
-    } on DioException catch (e) {
-      throw _handleError(e);
+      final url = '${baseUrl}/api/users/register';
+      final response = await http.post(Uri.parse(url), body: {'email': email});
+
+      print('Backend response: ${response.body}');
+      return jsonDecode(response.body);
+    } catch (e) {
+      print('Error sending password reset link: $e');
+      rethrow;
     }
   }
 
-  Future<Response> resetPassword(
+  Future<Map<String, dynamic>> resetPassword(
       String email, String otp, String newPassword) async {
     try {
-      final response = await _dio.post(
-        '/users/reset-password',
-        data: {
-          'email': email,
-          'otp': otp,
-          'newPassword': newPassword,
-        },
-      );
-      return response;
-    } on DioException catch (e) {
-      throw _handleError(e);
+      final url = '${baseUrl}/api/users/register';
+      final response = await http.post(Uri.parse(url), body: {
+        'email': email,
+        'otp': otp,
+        'newPassword': newPassword,
+      });
+
+      print('Backend response: ${response.body}');
+      return jsonDecode(response.body);
+    } catch (e) {
+      print('Error resetting password: $e');
+      rethrow;
     }
   }
 
   Future<String> login(String email, String password) async {
     try {
-      final response = await _dio.post(
-        '/users/login',
-        data: {'email': email, 'password': password},
+      final url = '$baseUrl/api/users/login';
+      final response = await client.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
       );
-      final token = response.data['token'] as String;
+
+      print('Backend response: ${response.body}');
+      final data = jsonDecode(response.body);
+      if (data['success'] != true) {
+        final message = data['message'] ?? 'Login failed';
+        throw Exception(message);
+      }
+      final token = data['token'];
+      if (token == null || token is! String) {
+        throw Exception('Invalid token received');
+      }
       await _storage.write(key: _tokenKey, value: token);
       return token;
-    } on DioException catch (e) {
-      throw _handleError(e);
+    } catch (e) {
+      print('Error logging in: $e');
+      rethrow;
     }
   }
 
   Future<UserModel> fetchUserProfile() async {
     try {
-      final response = await _dio.get('/users/profile');
-      return UserModel.fromJson(response.data['user']);
-    } on DioException catch (e) {
-      throw _handleError(e);
+      final url = '${baseUrl}/api/users/register';
+      final response = await http.get(Uri.parse(url));
+      print('Backend response: ${response.body}');
+      final data = jsonDecode(response.body);
+      return UserModel.fromJson(data['user']);
+    } catch (e) {
+      print('Error fetching user profile: $e');
+      rethrow;
     }
   }
 
   Future<bool> verifyOtp(String email, String otp) async {
     try {
-      print('Verifying OTP for email: $email');
-      print('Request URL: ${_dio.options.baseUrl}/users/verify-otp');
+      final url = '${baseUrl}/api/users/register';
+      final response = await http.post(Uri.parse(url), body: {
+        'email': email,
+        'otp': otp,
+      });
 
-      final response = await _dio.post(
-        '/users/verify-otp',
-        data: {'email': email, 'otp': otp},
-      );
-
-      print('OTP verification response: ${response.data}');
-
-      if (response.data['token'] != null) {
-        await _storage.write(key: _tokenKey, value: response.data['token']);
+      print('Backend response: ${response.body}');
+      final data = jsonDecode(response.body);
+      if (data['token'] != null) {
+        await _storage.write(key: _tokenKey, value: data['token']);
         return true;
       } else {
         throw Exception('No token received in response');
       }
-    } on DioException catch (e) {
-      print('DioException in verifyOtp: ${e.message}');
-      print('Error type: ${e.type}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
-      throw _handleError(e);
     } catch (e) {
-      print('Unexpected error in verifyOtp: $e');
-      print('Error type: ${e.runtimeType}');
+      print('Error verifying OTP: $e');
       rethrow;
     }
   }
 
   Future<void> logout() async {
     await _storage.delete(key: _tokenKey);
-    _dio.options.headers.remove('Authorization');
   }
 
   Future<bool> get isAuthenticated async {
@@ -170,48 +145,19 @@ class AuthService {
 
   Future<void> deleteAccount() async {
     try {
-      print('Attempting to delete account...');
-      print('Request URL: ${_dio.options.baseUrl}/users/delete-account');
+      final url = '${baseUrl}/api/users/delete-account';
+      final response = await http.delete(Uri.parse(url));
 
-      await _dio.delete('/users/delete-account');
+      if (response.statusCode == 200) {
+        print('Account deleted successfully');
 
-      print('Account deleted successfully');
-
-      // Clear local storage
-      await _storage.delete(key: _tokenKey);
-      _dio.options.headers.remove('Authorization');
-    } on DioException catch (e) {
-      print('DioException in deleteAccount: ${e.message}');
-      print('Error type: ${e.type}');
-      print('Response status: ${e.response?.statusCode}');
-      print('Response data: ${e.response?.data}');
-      throw _handleError(e);
+        // Clear local storage
+        await _storage.delete(key: _tokenKey);
+      } else {
+        print('Error deleting account: ${response.statusCode}');
+      }
     } catch (e) {
-      print('Unexpected error in deleteAccount: $e');
-      print('Error type: ${e.runtimeType}');
-      rethrow;
+      print('Error deleting account: $e');
     }
-  }
-
-  static Exception _handleError(DioException e) {
-    print('Handling error: ${e.message}');
-    print('Error type: ${e.type}');
-    print('Error response: ${e.response?.data}');
-
-    final response = e.response;
-    if (response != null) {
-      final data = response.data as Map<String, dynamic>?;
-      final message = data?['message'] ?? 'Unknown error occurred';
-      return Exception('$message (${response.statusCode})');
-    }
-
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout ||
-        e.type == DioExceptionType.sendTimeout) {
-      return Exception(
-          'Connection timeout. Please check your internet connection and try again.');
-    }
-
-    return Exception('Network error: ${e.message}');
   }
 }

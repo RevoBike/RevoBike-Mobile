@@ -15,7 +15,7 @@ class AuthCheckScreen extends StatefulWidget {
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
   final AuthService _authService =
-      AuthService(baseUrl: "https://revobike-web-3.onrender.com/api");
+      AuthService(baseUrl: "https://revobike-web-3.onrender.com");
   @override
   void initState() {
     super.initState();

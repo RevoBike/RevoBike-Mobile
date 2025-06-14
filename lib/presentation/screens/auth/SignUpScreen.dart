@@ -47,11 +47,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     // Add listener to sanitize university ID input
     _universityIdController.addListener(() {
       final text = _universityIdController.text;
-      final sanitized = text.replaceAll(RegExp(r'[^0-9]'), '');
+      final sanitized = text.replaceAll(RegExp(r'[^0-9a-zA-Z\/]'), '');
       if (text != sanitized) {
+        final upperSanitized = sanitized.toUpperCase();
         _universityIdController.value = TextEditingValue(
-          text: sanitized,
-          selection: TextSelection.collapsed(offset: sanitized.length),
+          text: upperSanitized,
+          selection: TextSelection.collapsed(offset: upperSanitized.length),
         );
       }
     });
@@ -152,9 +153,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (_passwordController.text.length < 6) {
       setState(() => _passwordError = 'Password must be at least 6 characters');
     }
-    if (_universityIdController.text.length != 6) {
-      setState(() =>
-          _universityIdError = 'University ID must be 6 digits (e.g., 167314)');
+
+    final universityIdPattern = RegExp(r'^[A-Za-z]{3}\d{4}\/\d{2}$');
+    if (!universityIdPattern.hasMatch(_universityIdController.text)) {
+      setState(() => _universityIdError =
+          'University ID must be in format: 3 letters, 4 digits, "/", 2 digits (e.g., ETS1673/14)');
     }
 
     if (_nameError != null ||
@@ -186,29 +189,41 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _phoneNumberController.text,
       );
 
-      print('Registration successful, showing success message...');
+      print('Backend response: $response');
 
-      // Show success feedback before navigation
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(response['message']),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (response['success'] == true) {
+        print('Registration successful, showing success message...');
 
-      print('Navigating to OTP verification screen...');
-
-      // Navigate to OTP verification screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(
-            email: _emailController.text,
-            name: _nameController.text,
-            password: _passwordController.text,
+        // Show success feedback before navigation
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message']),
+            backgroundColor: Colors.green,
           ),
-        ),
-      );
+        );
+
+        print('Navigating to OTP verification screen...');
+
+        // Navigate to OTP verification screen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(
+              email: _emailController.text,
+              name: _nameController.text,
+              password: _passwordController.text,
+            ),
+          ),
+        );
+      } else {
+        print('Registration failed: ${response['message']}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: ${response['message']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } catch (e) {
       print('Error occurred: $e');
 
@@ -228,6 +243,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _nameController.dispose();
+    _passwordController.dispose();
+    _universityIdController.dispose();
+    _phoneNumberController.dispose();
+    super.dispose();
   }
 
   @override
@@ -325,13 +350,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           child: TextFormField(
                             controller: _universityIdController,
                             keyboardType: TextInputType.number,
-                            maxLength: 6,
+                            maxLength: 10,
                             decoration: InputDecoration(
                               prefixIcon: const Icon(Icons.school,
                                   color: AppColors.primaryGreen),
                               labelText: "University ID",
-                              hintText: "123414",
-                              helperText: "Enter only the 6-digit number",
+                              hintText: "ETS1234/14",
+                              helperText: "Enter full ID",
                               helperStyle: const TextStyle(
                                 color: Colors.grey,
                                 fontSize: 12,

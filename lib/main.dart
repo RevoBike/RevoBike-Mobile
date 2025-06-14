@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:revobike/presentation/screens/home/HomeScreen.dart';
+import 'package:revobike/presentation/screens/auth/AuthCheckScreen.dart'; // Import AuthCheckScreen
 import 'package:revobike/constants/app_colors.dart';
 
 void main() {
@@ -20,11 +20,19 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.rubikTextTheme(),
       ),
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(),
+      home:
+          const AuthCheckScreen(), // IMPORTANT: Set AuthCheckScreen as the initial home widget
     );
   }
 }
 
+// You no longer need a custom SplashScreen widget if AuthCheckScreen handles the initial loading.
+// If you want a branding splash screen before AuthCheckScreen, you could build it
+// as a separate, very short-lived screen that then navigates to AuthCheckScreen.
+// For simplicity, AuthCheckScreen will now serve as your initial loading/check screen.
+
+// If you still want a visual splash screen before AuthCheckScreen:
+/*
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
@@ -32,7 +40,7 @@ class SplashScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     Future.delayed(const Duration(milliseconds: 500), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const AuthCheckScreen()),
       );
     });
 
@@ -60,3 +68,4 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
+*/

@@ -51,8 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
         final password = _passwordController.text.toString();
 
         await _authService.login(email, password);
-        UserModel user = await _authService.fetchUserProfile();
-        print(user); // Successfully logged in user profile
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),

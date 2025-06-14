@@ -15,6 +15,7 @@ class AuthCheckScreen extends StatefulWidget {
 
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
   final AuthService _authService = AuthService();
+
   @override
   void initState() {
     super.initState();
@@ -25,12 +26,27 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
     bool isAuthenticated = await _authService.isAuthenticated;
 
     if (isAuthenticated) {
-      UserModel user = await _authService.fetchUserProfile();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      // Fetch user profile from local storage. It returns UserModel?, so handle null.
+      final UserModel? user = await _authService.fetchUserProfile();
+
+      if (user != null) {
+        // If user profile is found, proceed to HomeScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        // If authenticated but no local user profile (e.g., corrupted storage), force re-login
+        print(
+            'AuthCheckScreen: User authenticated but profile not found locally. Logging out.');
+        await _authService.logout(); // Clear token too
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     } else {
+      // Not authenticated, navigate to LoginScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),

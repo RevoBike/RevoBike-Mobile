@@ -7,6 +7,5 @@ class ApiConstants {
   static const String verifyOtpEndpoint = '/api/users/verify-otp';
   static const String resendOtpEndpoint = '/api/users/resend-otp';
   static const String resetPasswordEndpoint = '/api/users/reset-password';
-  static const String userProfileEndpoint = '/api/users/profile';
   
 }

@@ -5,6 +5,7 @@ import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
 import 'package:revobike/constants/app_colors.dart';
+import 'package:revobike/api/api_constants.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -14,10 +15,7 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final AuthService authService = AuthService(
-    baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://revobike-web-3.onrender.com'),
-  );
+  final AuthService authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -178,7 +176,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       print('Email: ${_emailController.text}');
       print('University ID: ${_universityIdController.text}');
       print('Phone Number: ${_phoneNumberController.text}');
-      print('API Base URL: ${authService.baseUrl}');
+      print('API Base URL: ${ApiConstants.baseUrl}');
 
       // First register the user (this will trigger OTP sending)
       final response = await authService.register(

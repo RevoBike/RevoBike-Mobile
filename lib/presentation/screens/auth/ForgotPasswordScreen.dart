@@ -12,10 +12,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final AuthService authService = AuthService(
-    baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://backend-ge4m.onrender.com'),
-  );
+  final AuthService authService = AuthService();
   final TextEditingController _emailController = TextEditingController();
   String? _emailError;
   String? _generalError;

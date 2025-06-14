@@ -16,10 +16,7 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
-  final AuthService authService = AuthService(
-    baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://backend-ge4m.onrender.com'),
-  );
+  final AuthService authService = AuthService();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController =

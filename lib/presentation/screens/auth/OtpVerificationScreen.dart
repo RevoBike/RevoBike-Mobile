@@ -23,10 +23,7 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final AuthService authService = AuthService(
-    baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'https://backend-ge4m.onrender.com'),
-  );
+  final AuthService authService = AuthService();
   final List<TextEditingController> _otpControllers =
       List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _otpFocusNodes =
@@ -94,7 +91,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       });
 
       print('Verifying OTP for email: ${widget.email}');
-      print('Using API URL: ${authService.baseUrl}');
+      // print('Using API URL: ${ApiConstants.baseUrl}');
 
       // Verify OTP with backend
       await authService.verifyOtp(widget.email, otp);

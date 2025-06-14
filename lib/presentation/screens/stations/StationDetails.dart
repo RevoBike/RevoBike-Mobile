@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:revobike/data/models/Station.dart';
+import 'package:revobike/data/models/Station.dart'; // Ensure this is the updated model
 import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
 
 class StationDetailsScreen extends StatelessWidget {
@@ -11,6 +11,11 @@ class StationDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Find the first available bike ID for the "Book" button
+    final String? firstAvailableBikeId = station.availableBikes.isNotEmpty
+        ? station.availableBikes.first.bikeId
+        : null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -44,7 +49,8 @@ class StationDetailsScreen extends StatelessWidget {
                           const Icon(Icons.location_on,
                               color: Colors.grey, size: 18),
                           const SizedBox(width: 4),
-                          Text(station.location,
+                          // Use station.address for specific address if available, fallback to name
+                          Text(station.address ?? station.name,
                               style: TextStyle(
                                   fontSize: 14, color: Colors.grey.shade700)),
                         ],
@@ -57,7 +63,8 @@ class StationDetailsScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.phone, color: Colors.blue, size: 18),
                               SizedBox(width: 4),
-                              Text("+251989341234",
+                              Text(
+                                  "+251989341234", // This is hardcoded; consider making it dynamic from station.contact or similar
                                   style: TextStyle(
                                       fontSize: 14, color: Colors.blue)),
                             ],
@@ -66,7 +73,8 @@ class StationDetailsScreen extends StatelessWidget {
                             children: [
                               Icon(Icons.star, color: Colors.orange, size: 18),
                               SizedBox(width: 4),
-                              Text("4.7 (83 Reviews)",
+                              Text(
+                                  "4.7 (83 Reviews)", // This is hardcoded; consider making it dynamic
                                   style: TextStyle(
                                       fontSize: 14, color: Colors.black87)),
                             ],
@@ -77,10 +85,15 @@ class StationDetailsScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
+                          // Use .length for availableBikes as it's a List<BikeModel>
+                          _infoCard("${station.availableBikes.length}",
+                              "Available Bikes"),
+                          // Safely display rate with a fallback if null
                           _infoCard(
-                              "${station.availableBikes}", "Available Bikes"),
-                          _infoCard("Br.${station.rate}/KM", "Price"),
-                          _infoCard("2 hrs", "Maximum Time"),
+                              "Br.${station.rate?.toStringAsFixed(2) ?? 'N/A'}/KM",
+                              "Price"),
+                          _infoCard("2 hrs",
+                              "Maximum Time"), // This is hardcoded; consider making it dynamic
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -96,7 +109,19 @@ class StationDetailsScreen extends StatelessWidget {
                                     side: const BorderSide(
                                         color: Colors.blueAccent, width: 1)),
                               ),
-                              onPressed: () {},
+                              onPressed: () {
+                                // Add logic for Get Direction here, e.g., launching maps app
+                                // Use station.location.coordinates[1] for latitude, [0] for longitude
+                                // Example:
+                                // final Uri googleMapsUrl = Uri.parse(
+                                //     'https://www.google.com/maps/dir/?api=1&destination=${station.location.coordinates[1]},${station.location.coordinates[0]}');
+                                // if (await canLaunchUrl(googleMapsUrl)) {
+                                //   await launchUrl(googleMapsUrl);
+                                // } else {
+                                //   ScaffoldMessenger.of(context).showSnackBar(
+                                //       const SnackBar(content: Text('Could not launch map.')));
+                                // }
+                              },
                               child: const Text("Get Direction"),
                             ),
                           ),
@@ -109,13 +134,40 @@ class StationDetailsScreen extends StatelessWidget {
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(8)),
                               ),
-                              onPressed: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) =>
-                                        BookingConfirmationScreen(
-                                            station: station)));
-                              },
-                              child: const Text("Book"),
+                              // Enable/disable based on status AND available bikes
+                              onPressed:
+                                  station.status?.toLowerCase() == "open" &&
+                                          firstAvailableBikeId != null
+                                      ? () {
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      BookingConfirmationScreen(
+                                                        station: station,
+                                                        selectedBikeId:
+                                                            firstAvailableBikeId, // Pass the first available bike ID
+                                                      )));
+                                        }
+                                      : () {
+                                          // Show snackbar if no bikes or not open
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                firstAvailableBikeId == null
+                                                    ? 'No bikes available at this station.'
+                                                    : 'This station is currently ${station.status ?? 'closed'}.',
+                                              ),
+                                            ),
+                                          );
+                                        },
+                              child: Text(
+                                firstAvailableBikeId == null
+                                    ? "No Bikes"
+                                    : "Book",
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 18),
+                              ),
                             ),
                           ),
                         ],
@@ -125,10 +177,9 @@ class StationDetailsScreen extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
+                      // Consider using station.description if your API provides it
                       const Text(
-                        "The Saris Abo station is an innovative energy solution that embodies modern technology "
-                        "and the desire for a sustainable future. This station combines advanced engineering "
-                        "solutions, alternative energy sources, and high efficiency.",
+                        "This station is strategically located to provide convenient access to bikes for commuters and visitors. It features state-of-the-art security and easy-to-use booking system for a seamless experience.", // Example description, replace with dynamic data if available
                         style: TextStyle(fontSize: 14, color: Colors.black54),
                       ),
                       const SizedBox(height: 16),
@@ -138,17 +189,28 @@ class StationDetailsScreen extends StatelessWidget {
                           height: 200,
                           child: GoogleMap(
                             initialCameraPosition: CameraPosition(
-                              target:
-                                  LatLng(station.latitude, station.longitude),
+                              // Access coordinates from the nested location object
+                              target: LatLng(station.location.coordinates[1],
+                                  station.location.coordinates[0]),
                               zoom: 14,
                             ),
                             markers: {
                               Marker(
                                 markerId: MarkerId(station.id),
-                                position:
-                                    LatLng(station.latitude, station.longitude),
+                                // Access coordinates from the nested location object
+                                position: LatLng(
+                                    station.location.coordinates[1],
+                                    station.location.coordinates[0]),
+                                infoWindow: InfoWindow(
+                                  title: station.name,
+                                  snippet:
+                                      'Available: ${station.availableBikes.length}',
+                                ),
                               ),
                             },
+                            zoomControlsEnabled: false, // Hide zoom controls
+                            myLocationButtonEnabled:
+                                false, // Hide my location button
                           ),
                         ),
                       ),

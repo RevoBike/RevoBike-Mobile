@@ -1,60 +1,135 @@
 import 'package:equatable/equatable.dart';
 
-class Station extends Equatable {
-  final String id;
-  final String name;
-  final String location;
-  final int availableBikes;
-  final double latitude;
-  final double longitude;
-  final String status;
-  final double rate;
+// Represents the nested 'location' object from your backend API response
+class LocationData extends Equatable {
+  final String type;
+  final List<double> coordinates; // Backend sends [longitude, latitude]
 
-  const Station({
-    required this.id,
-    required this.name,
-    required this.location,
-    required this.availableBikes,
-    required this.latitude,
-    required this.longitude,
-    required this.status,
-    required this.rate,
+  const LocationData({
+    required this.type,
+    required this.coordinates,
   });
 
-  factory Station.fromJson(Map<String, dynamic> json) {
-    // Extract coordinates from the location object
-    final location = json['location'] as Map<String, dynamic>;
-    final coordinates = location['coordinates'] as List<dynamic>;
-
-    // Count available bikes
-    final availableBikes = (json['available_bikes'] as List<dynamic>)
-        .where((bike) => bike['status'] == 'available')
-        .length;
-
-    return Station(
-      id: json['_id'] as String,
-      name: json['name'] as String,
-      location: json['name'] as String, // Using name as location for now
-      availableBikes: availableBikes,
-      latitude: coordinates[1]
-          as double, // Note: coordinates are [longitude, latitude]
-      longitude: coordinates[0] as double,
-      status: 'open', // Default status
-      rate: 2.5, // Default rate
+  factory LocationData.fromJson(Map<String, dynamic> json) {
+    return LocationData(
+      type: json['type'] as String,
+      // Ensure coordinates are cast to List<double>
+      coordinates: (json['coordinates'] as List<dynamic>)
+          .map((e) => e as double)
+          .toList(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'type': type,
+      'coordinates': coordinates,
+    };
+  }
+
+  @override
+  List<Object?> get props => [type, coordinates];
+}
+
+// NEW: Model for individual bike objects within available_bikes list
+class BikeModel extends Equatable {
+  final String id; // This is the _id from the bike object
+  final String bikeId; // This is the actual bike ID (e.g., STEPG001)
+  final String status;
+  final int?
+      batteryLevel; // Made nullable as it might not always be present or needed for every context
+
+  const BikeModel({
+    required this.id,
+    required this.bikeId,
+    required this.status,
+    this.batteryLevel,
+  });
+
+  factory BikeModel.fromJson(Map<String, dynamic> json) {
+    return BikeModel(
+      id: json['_id'] as String,
+      bikeId: json['bikeId'] as String,
+      status: json['status'] as String,
+      batteryLevel:
+          json['batteryLevel'] as int?, // Safely parse int, can be null
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {
+      '_id': id,
+      'bikeId': bikeId,
+      'status': status,
+    };
+    if (batteryLevel != null) data['batteryLevel'] = batteryLevel;
+    return data;
+  }
+
+  @override
+  List<Object?> get props => [id, bikeId, status, batteryLevel];
+}
+
+class Station extends Equatable {
+  final String id; // Maps to backend's '_id' for the station
+  final String name;
+  final LocationData location; // Nested LocationData object
+  final int totalSlots;
+  final List<BikeModel> availableBikes; // Changed to List<BikeModel>
+  final String? address; // NEW: Added address field from backend response
+  final String
+      status; // Assuming there's a status in your actual response or derived (e.g., 'open', 'closed')
+  final double? rate; // Added rate, made nullable
+
+  const Station({
+    required this.id,
+    required this.name,
+    required this.location,
+    required this.totalSlots,
+    required this.availableBikes,
+    this.address, // Added to constructor
+    this.status = 'Unknown', // Default status if not provided by API
+    this.rate,
+  });
+
+  factory Station.fromJson(Map<String, dynamic> json) {
+    // Parse the list of bike objects into a List<BikeModel>
+    final List<BikeModel> bikes = (json['available_bikes'] as List<dynamic>?)
+            ?.map((e) => BikeModel.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        []; // Handle case where 'available_bikes' might be null or empty
+
+    return Station(
+      id: json['_id'] as String, // Correctly parse '_id' from backend
+      name: json['name'] as String,
+      location: LocationData.fromJson(
+          json['location'] as Map<String, dynamic>), // Parse nested 'location'
+      totalSlots: json['totalSlots'] as int,
+      availableBikes: bikes
+          .where((bike) => bike.status == 'available')
+          .toList(), // Filter for 'available' bikes
+      address: json['address'] as String?, // Safely parse address
+      status: json['status'] as String? ??
+          'Open', // Default to 'Open' if not provided
+      rate: (json['rate'] as num?)
+          ?.toDouble(), // Safely parse double, can be null
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {
       '_id': id,
       'name': name,
-      'location': location,
-      'availableBikes': availableBikes,
-      'latitude': latitude,
-      'longitude': longitude,
+      'location': location.toJson(), // Convert nested LocationData to JSON
+      'totalSlots': totalSlots,
+      'available_bikes': availableBikes
+          .map((e) => e.toJson())
+          .toList(), // Convert BikeModel list to JSON
       'status': status,
-      'rate': rate,
     };
+    if (address != null) data['address'] = address;
+    if (rate != null) data['rate'] = rate;
+    return data;
   }
 
   @override
@@ -62,9 +137,9 @@ class Station extends Equatable {
         id,
         name,
         location,
+        totalSlots,
         availableBikes,
-        latitude,
-        longitude,
+        address,
         status,
         rate,
       ];

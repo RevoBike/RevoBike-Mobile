@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:revobike/api/station_service.dart';
-import 'package:revobike/data/models/Station.dart';
+import 'package:revobike/data/models/Station.dart'; // Ensure this is the updated model
 import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
 import 'package:revobike/presentation/screens/stations/StationDetails.dart';
+import 'package:revobike/api/api_constants.dart'; // Import ApiConstants
 
 class StationScreen extends StatefulWidget {
   const StationScreen({super.key});
@@ -13,10 +14,8 @@ class StationScreen extends StatefulWidget {
 }
 
 class _StationScreenState extends State<StationScreen> {
-  final StationService _stationService = StationService(
-    baseUrl: const String.fromEnvironment('API_BASE_URL',
-        defaultValue: 'http://localhost:5000/api'),
-  );
+  // Initialize StationService without baseUrl parameter, as it uses ApiConstants directly
+  final StationService _stationService = StationService();
   List<Station> _stations = [];
   bool _isLoading = true;
   String? _error;
@@ -42,7 +41,9 @@ class _StationScreenState extends State<StationScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = e.toString().contains('Exception:')
+            ? e.toString().split('Exception: ')[1]
+            : e.toString();
         _isLoading = false;
       });
     }
@@ -75,6 +76,15 @@ class _StationScreenState extends State<StationScreen> {
       );
     }
 
+    if (_stations.isEmpty) {
+      return const Center(
+        child: Text(
+          'No stations available at the moment.',
+          style: TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+      );
+    }
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -82,6 +92,12 @@ class _StationScreenState extends State<StationScreen> {
           itemCount: _stations.length,
           itemBuilder: (context, index) {
             final station = _stations[index];
+            // Get the first available bike ID for the "Book" button
+            final String? firstAvailableBikeId =
+                station.availableBikes.isNotEmpty
+                    ? station.availableBikes.first.bikeId
+                    : null;
+
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(16),
@@ -102,18 +118,21 @@ class _StationScreenState extends State<StationScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        station.name,
-                        style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87),
+                      Expanded(
+                        child: Text(
+                          station.name,
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       Icon(
-                        station.status == "open"
+                        station.status?.toLowerCase() == "open"
                             ? FontAwesomeIcons.circleCheck
                             : FontAwesomeIcons.circleXmark,
-                        color: station.status == "open"
+                        color: station.status?.toLowerCase() == "open"
                             ? Colors.green
                             : Colors.red,
                         size: 18,
@@ -129,7 +148,10 @@ class _StationScreenState extends State<StationScreen> {
                         color: Colors.blue,
                       ),
                       const SizedBox(width: 8),
-                      Text(station.location,
+                      // Use station.address for location display
+                      Text(
+                          station.address ??
+                              station.name, // Prefer address, fallback to name
                           style: const TextStyle(
                               fontSize: 14, color: Colors.grey)),
                     ],
@@ -140,7 +162,8 @@ class _StationScreenState extends State<StationScreen> {
                       const Icon(FontAwesomeIcons.bicycle,
                           size: 16, color: Colors.blue),
                       const SizedBox(width: 8),
-                      Text("${station.availableBikes} Bikes Available",
+                      // Use .length for availableBikes as it's a List<BikeModel>
+                      Text("${station.availableBikes.length} Bikes Available",
                           style: const TextStyle(
                               fontSize: 14, color: Colors.blueGrey)),
                     ],
@@ -151,15 +174,17 @@ class _StationScreenState extends State<StationScreen> {
                       const Icon(FontAwesomeIcons.route,
                           size: 16, color: Colors.blue),
                       const SizedBox(width: 8),
+                      // Access coordinates from the nested location object
                       Text(
-                          "${station.latitude.toStringAsFixed(2)}, ${station.longitude.toStringAsFixed(2)}",
+                          "${station.location.coordinates[1].toStringAsFixed(2)}, ${station.location.coordinates[0].toStringAsFixed(2)}",
                           style: const TextStyle(
                               fontSize: 14, color: Colors.blueGrey)),
                       const Spacer(),
                       const Icon(FontAwesomeIcons.dollarSign,
                           size: 16, color: Colors.blue),
                       const SizedBox(width: 8),
-                      Text("Br.${station.rate}/km",
+                      // Safely display rate with a fallback if null
+                      Text("Br.${station.rate?.toStringAsFixed(2) ?? 'N/A'}/km",
                           style: const TextStyle(
                               fontSize: 14, color: Colors.blueGrey)),
                     ],
@@ -194,24 +219,44 @@ class _StationScreenState extends State<StationScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: station.status == "open"
+                          // Enable/disable based on status AND available bikes
+                          onPressed: station.status?.toLowerCase() == "open" &&
+                                  firstAvailableBikeId != null
                               ? () => Navigator.of(context).push(
                                   MaterialPageRoute(
                                       builder: (context) =>
                                           BookingConfirmationScreen(
-                                              station: station)))
-                              : null,
+                                            station: station,
+                                            selectedBikeId:
+                                                firstAvailableBikeId, // Pass the first available bike ID
+                                          )))
+                              : () {
+                                  // Show snackbar if no bikes or not open
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        firstAvailableBikeId == null
+                                            ? 'No bikes available at this station.'
+                                            : 'This station is currently ${station.status ?? 'closed'}.',
+                                      ),
+                                    ),
+                                  );
+                                },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: station.status == "open"
-                                ? Colors.blue
-                                : Colors.grey,
+                            backgroundColor:
+                                station.status?.toLowerCase() == "open" &&
+                                        firstAvailableBikeId != null
+                                    ? Colors.blue
+                                    : Colors.grey,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
                           ),
-                          child: const Text("Book",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
+                          child: Text(
+                            firstAvailableBikeId == null ? "No Bikes" : "Book",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                     ],

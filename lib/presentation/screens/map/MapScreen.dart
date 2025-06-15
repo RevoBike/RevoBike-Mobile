@@ -303,7 +303,7 @@ class _MapScreenState extends State<MapScreen> {
                   Expanded(
                     child: ElevatedButton(
                       // Enable/disable based on status AND available bikes
-                      onPressed: station.status?.toLowerCase() == "open" &&
+                      onPressed: station.status.toLowerCase() == "open" &&
                               firstAvailableBikeId != null
                           ? () {
                               Navigator.of(context).pop(); // Close bottom sheet
@@ -329,7 +329,7 @@ class _MapScreenState extends State<MapScreen> {
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            station.status?.toLowerCase() == "open" &&
+                            station.status.toLowerCase() == "open" &&
                                     firstAvailableBikeId != null
                                 ? Colors.blueAccent
                                 : Colors.grey, // Grey out if disabled

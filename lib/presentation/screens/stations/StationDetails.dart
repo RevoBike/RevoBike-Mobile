@@ -136,7 +136,7 @@ class StationDetailsScreen extends StatelessWidget {
                               ),
                               // Enable/disable based on status AND available bikes
                               onPressed:
-                                  station.status?.toLowerCase() == "open" &&
+                                  station.status.toLowerCase() == "open" &&
                                           firstAvailableBikeId != null
                                       ? () {
                                           Navigator.of(context).push(

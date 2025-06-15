@@ -129,10 +129,10 @@ class _StationScreenState extends State<StationScreen> {
                         ),
                       ),
                       Icon(
-                        station.status?.toLowerCase() == "open"
+                        station.status.toLowerCase() == "open"
                             ? FontAwesomeIcons.circleCheck
                             : FontAwesomeIcons.circleXmark,
-                        color: station.status?.toLowerCase() == "open"
+                        color: station.status.toLowerCase() == "open"
                             ? Colors.green
                             : Colors.red,
                         size: 18,
@@ -220,7 +220,7 @@ class _StationScreenState extends State<StationScreen> {
                       Expanded(
                         child: ElevatedButton(
                           // Enable/disable based on status AND available bikes
-                          onPressed: station.status?.toLowerCase() == "open" &&
+                          onPressed: station.status.toLowerCase() == "open" &&
                                   firstAvailableBikeId != null
                               ? () => Navigator.of(context).push(
                                   MaterialPageRoute(
@@ -244,7 +244,7 @@ class _StationScreenState extends State<StationScreen> {
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                station.status?.toLowerCase() == "open" &&
+                                station.status.toLowerCase() == "open" &&
                                         firstAvailableBikeId != null
                                     ? Colors.blue
                                     : Colors.grey,

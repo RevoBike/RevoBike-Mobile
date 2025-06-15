@@ -53,8 +53,9 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
   // Starts tracking user's location and updates route/distance
   void _startTracking() {
     _location.onLocationChanged.listen((loc_lib.LocationData currentLocation) {
-      if (currentLocation.latitude == null || currentLocation.longitude == null)
+      if (currentLocation.latitude == null || currentLocation.longitude == null) {
         return;
+      }
       LatLng newPosition =
           LatLng(currentLocation.latitude!, currentLocation.longitude!);
 

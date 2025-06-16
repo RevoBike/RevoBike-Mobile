@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Import flutter_svg
 import 'package:revobike/data/models/Station.dart' as station_model;
 import 'package:revobike/data/models/Bike.dart' as bike_model;
+import 'package:revobike/data/models/Station.dart' as station_model;
 import 'package:revobike/presentation/screens/booking/BikeDetailsScreen.dart'
     as bike_details_screen;
 import 'package:revobike/utils/location_utils.dart'; // Ensure this file exists and has calculateDistance

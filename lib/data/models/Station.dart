@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:revobike/data/models/Bike.dart' as bike_model;
 
 // Represents the nested 'location' object from your backend API response
 class LocationData extends Equatable {
@@ -31,51 +32,12 @@ class LocationData extends Equatable {
   List<Object?> get props => [type, coordinates];
 }
 
-// NEW: Model for individual bike objects within available_bikes list
-class BikeModel extends Equatable {
-  final String id; // This is the _id from the bike object
-  final String bikeId; // This is the actual bike ID (e.g., STEPG001)
-  final String status;
-  final int?
-      batteryLevel; // Made nullable as it might not always be present or needed for every context
-
-  const BikeModel({
-    required this.id,
-    required this.bikeId,
-    required this.status,
-    this.batteryLevel,
-  });
-
-  factory BikeModel.fromJson(Map<String, dynamic> json) {
-    return BikeModel(
-      id: json['_id'] as String,
-      bikeId: json['bikeId'] as String,
-      status: json['status'] as String,
-      batteryLevel:
-          json['batteryLevel'] as int?, // Safely parse int, can be null
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {
-      '_id': id,
-      'bikeId': bikeId,
-      'status': status,
-    };
-    if (batteryLevel != null) data['batteryLevel'] = batteryLevel;
-    return data;
-  }
-
-  @override
-  List<Object?> get props => [id, bikeId, status, batteryLevel];
-}
-
 class Station extends Equatable {
   final String id; // Maps to backend's '_id' for the station
   final String name;
   final LocationData location; // Nested LocationData object
   final int totalSlots;
-  final List<BikeModel> availableBikes; // Changed to List<BikeModel>
+  final List<bike_model.BikeModel> availableBikes; // Use bike_model.BikeModel
   final String? address; // NEW: Added address field from backend response
   final String
       status; // Assuming there's a status in your actual response or derived (e.g., 'open', 'closed')
@@ -93,9 +55,9 @@ class Station extends Equatable {
   });
 
   factory Station.fromJson(Map<String, dynamic> json) {
-    // Parse the list of bike objects into a List<BikeModel>
-    final List<BikeModel> bikes = (json['available_bikes'] as List<dynamic>?)
-            ?.map((e) => BikeModel.fromJson(e as Map<String, dynamic>))
+    // Parse the list of bike objects into a List<bike_model.BikeModel>
+    final List<bike_model.BikeModel> bikes = (json['available_bikes'] as List<dynamic>?)
+            ?.map((e) => bike_model.BikeModel.fromJson(e as Map<String, dynamic>))
             .toList() ??
         []; // Handle case where 'available_bikes' might be null or empty
 

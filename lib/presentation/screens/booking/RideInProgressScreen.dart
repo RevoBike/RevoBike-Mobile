@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart'; // Already imported
 import 'package:revobike/api/ride_service.dart'; // Import RideService
 import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Ensure correct path for PaymentScreen
 import 'dart:math';
+import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
 
 class RideInProgressScreen extends StatefulWidget {
   final String rideId; // NEW: Requires the ride ID
@@ -53,7 +54,8 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
   // Starts tracking user's location and updates route/distance
   void _startTracking() {
     _location.onLocationChanged.listen((loc_lib.LocationData currentLocation) {
-      if (currentLocation.latitude == null || currentLocation.longitude == null) {
+      if (currentLocation.latitude == null ||
+          currentLocation.longitude == null) {
         return;
       }
       LatLng newPosition =
@@ -193,7 +195,7 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
               Polyline(
                 polylineId: const PolylineId("route"),
                 points: _routeCoordinates,
-                color: Colors.blue,
+                color: AppColors.primaryGreen,
                 width: 5,
               ),
             },
@@ -272,7 +274,7 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 backgroundColor: _isNearStation
-                    ? Colors.blueAccent
+                    ? AppColors.secondaryGreen
                     : Colors.grey, // Grey out if disabled
               ),
               child: _isLoadingEndRide

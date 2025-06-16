@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:revobike/presentation/widget/CustomAppBar.dart';
 import 'package:revobike/presentation/widget/BottomNavBar.dart';
-import 'package:revobike/presentation/screens/map/MapScreen.dart'; // Assuming this widget handles the Google Map
-import 'package:revobike/api/auth_service.dart'; // Import your AuthService
-import 'package:revobike/data/models/User.dart'; // Import your UserModel
-import 'package:revobike/presentation/screens/auth/LoginScreen.dart'; // For logout navigation
+import 'package:revobike/presentation/screens/map/MapScreen.dart'; // Ensure this is imported
+import 'package:revobike/api/auth_service.dart';
+import 'package:revobike/data/models/User.dart';
+import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/account/AccountScreen.dart';
 import 'package:revobike/presentation/screens/recent/RecentScreen.dart';
-import 'package:revobike/presentation/screens/stations/StationScreen.dart'; // Import StationScreen
+import 'package:revobike/presentation/screens/stations/StationScreen.dart';
+import 'package:revobike/constants/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,28 +18,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AuthService _authService = AuthService(); // Instantiate AuthService
-  UserModel? _currentUser; // To store fetched user data
-  bool _isLoadingUser = true; // To manage loading state for user data
-  String _errorMessage = ''; // To display any error fetching user data
+  final AuthService _authService = AuthService();
+  UserModel? _currentUser;
+  bool _isLoadingUser = true;
+  String _errorMessage = '';
 
-  int _currentIndex = 0; // For the bottom navigation bar
-
-  // Screens for the IndexedStack, which will be the primary content switched by BottomNavBar
-  late final List<Widget> _bottomNavScreens;
+  int _currentIndex =
+      0; // 0 for HomePageScreen (your main dashboard, now with Map)
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); // Fetch user data on init
-
-    // Initialize _bottomNavScreens here to avoid re-creation on every build
-    _bottomNavScreens = [
-      MapScreen(), // Main map screen
-      StationScreen(), // Station screen for listing/selecting stations
-      RecentTripsScreen(), // Recent trips screen (assuming this is RecentTripsScreen)
-      AccountScreen(), // Account screen
-    ];
+    _fetchUserData();
   }
 
   Future<void> _fetchUserData() async {
@@ -47,19 +38,15 @@ class _HomeScreenState extends State<HomeScreen> {
       _errorMessage = '';
     });
     try {
-      // This now fetches the user from local storage, not an API call
       final user = await _authService.fetchUserProfile();
       if (user != null) {
         setState(() {
           _currentUser = user;
         });
       } else {
-        // If authenticated but no local user profile (e.g., corrupted storage), force re-login
-        print(
-            'AuthCheckScreen: User authenticated but profile not found locally. Logging out.');
-        await _authService.logout(); // Clear token too
+        print('User authenticated but profile not found locally. Logging out.');
+        await _authService.logout();
         if (mounted) {
-          // Check if the widget is still in the tree before navigating
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const LoginScreen()),
           );
@@ -71,13 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _errorMessage =
             'Failed to load user profile: ${e.toString().contains('Exception:') ? e.toString().split('Exception: ')[1] : e.toString()}';
       });
-      // Optionally, force logout if there's a serious storage error
-      // if (mounted) {
-      //   await _authService.logout();
-      //   Navigator.of(context).pushReplacement(
-      //     MaterialPageRoute(builder: (context) => LoginScreen()),
-      //   );
-      // }
     } finally {
       setState(() {
         _isLoadingUser = false;
@@ -85,25 +65,54 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // New method to handle the snackbar tap
-  void _onEnterDestinationTap() {
-    // Navigate to the StationScreen when the snackbar is tapped
-    // We'll set the _currentIndex to the index of StationScreen in _bottomNavScreens
-    // Or, if StationScreen is meant to be a new push, you'd do:
-    // Navigator.of(context).push(MaterialPageRoute(builder: (context) => StationScreen()));
-    // For this flow, let's assume it's part of the bottom nav screens.
-    setState(() {
-      final stationScreenIndex = _bottomNavScreens.indexWhere((widget) => widget.runtimeType == StationScreen);
-      _currentIndex = stationScreenIndex != -1 ? stationScreenIndex : 1;
-    });
+  // Local function to handle the snackbar tap (navigates to StationScreen tab)
+  void _onEnterDestinationTap(List<Widget> bottomNavScreens) {
+    // Find the index of StationScreen dynamically
+    final stationScreenIndex = bottomNavScreens
+        .indexWhere((widget) => widget.runtimeType == StationScreen);
+
+    if (stationScreenIndex != -1) {
+      setState(() {
+        _currentIndex = stationScreenIndex;
+      });
+    } else {
+      // Fallback: This should ideally not happen if StationScreen is in bottomNavScreens
+      setState(() {
+        // If StationScreen is expected at index 1 after HomePageScreen, set it directly
+        _currentIndex = 1; // Assuming StationScreen is now at index 1
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Define the list of screens for the Bottom Navigation Bar
+    // HomePageScreen is your primary 'home' tab at index 0 and now includes the map.
+    final List<Widget> bottomNavScreens = [
+      HomePageScreen(
+        currentUser: _currentUser,
+        isLoadingUser: _isLoadingUser,
+        errorMessage: _errorMessage,
+      ),
+      // MapScreen is now part of HomePageScreen, so it's removed from this list.
+      const StationScreen(), // Now at Index 1 (was 2)
+      const RecentTripsScreen(), // Now at Index 2 (was 3)
+      const AccountScreen(), // Now at Index 3 (was 4)
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
-      extendBody: true, // Allows the body to extend under the AppBar/NavBar
+      extendBody: true,
       appBar: CustomAppBar(
+        // Conditionally provide the onLeadingPressed callback for the back button.
+        // It will be shown on any tab *other than* HomePageScreen (index 0).
+        onLeadingPressed: _currentIndex != 0
+            ? () {
+                setState(() {
+                  _currentIndex = 0; // Navigate back to the HomePageScreen tab
+                });
+              }
+            : null, // No leading button on the HomePageScreen tab
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -118,132 +127,59 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Stack(
-        // Use Stack to layer the map content and the snackbar
-        children: [
-          Column(
-            // Keep your existing Column for header and content
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Row containing user icon, name, and welcome message
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  children: [
-                    // User Icon (using first letter of username for avatar if available)
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.blueGrey[100],
-                      child: _currentUser?.name != null &&
-                              _currentUser!.name.isNotEmpty
-                          ? Text(
-                              _currentUser!.name[0].toUpperCase(),
-                              style: TextStyle(
-                                  color: Colors.blueGrey[700],
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold),
-                            )
-                          : Icon(Icons.person,
-                              color: Colors.blueGrey[700], size: 30),
+      body: Expanded(
+        child: Stack(
+          children: [
+            IndexedStack(
+              index: _currentIndex,
+              children: bottomNavScreens,
+            ),
+            // The "Where to?" snackbar is displayed only on the HomePageScreen (index 0).
+            if (_currentIndex == 0)
+              Positioned(
+                left: 30.0,
+                right: 30.0,
+                bottom: 35.0 + kBottomNavigationBarHeight,
+                child: GestureDetector(
+                  onTap: () =>
+                      _onEnterDestinationTap(bottomNavScreens), // Pass the list
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 25.0, vertical: 20.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          spreadRadius: 2,
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    // User Name and Welcome Message
-                    if (_isLoadingUser)
-                      const CircularProgressIndicator(strokeWidth: 2)
-                    else if (_errorMessage.isNotEmpty)
-                      Expanded(
-                        child: Text(
-                          _errorMessage,
-                          style: TextStyle(color: Colors.red, fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Hello, ${_currentUser?.name ?? 'Guest'},',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                    child: Row(
+                      children: [
+                        Icon(Icons.search, color: Colors.grey[600]),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Where to?',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16.0,
                             ),
-                            const Text(
-                              'Welcome to StepGreen!',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              // Content area that switches based on BottomNavBar selection
-              Expanded(
-                child: IndexedStack(
-                  index: _currentIndex,
-                  children: _bottomNavScreens,
-                ),
-              ),
-            ],
-          ),
-          // >>> START OF NEW SNACKBAR IMPLEMENTATION <<<
-          // Positioned at the bottom of the Stack, with padding from the actual bottom
-          // to clear the BottomNavBar
-          if (_currentIndex ==
-              0) // Only show the snackbar on the MapScreen (index 0)
-            Positioned(
-              left: 30.0,
-              right: 30.0,
-              bottom: 35.0 +
-                  kBottomNavigationBarHeight, // Add height of BottomNavBar
-              child: GestureDetector(
-                onTap: _onEnterDestinationTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 25.0, vertical: 20.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        spreadRadius: 2,
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.search, color: Colors.grey[600]),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Where to?',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 16.0,
                           ),
                         ),
-                      ),
-                      Icon(Icons.arrow_forward_ios,
-                          color: Colors.grey[400], size: 16),
-                    ],
+                        Icon(Icons.arrow_forward_ios,
+                            color: Colors.grey[400], size: 16),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          // >>> END OF NEW SNACKBAR IMPLEMENTATION <<<
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,
@@ -253,6 +189,88 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
       ),
+    );
+  }
+}
+
+class HomePageScreen extends StatelessWidget {
+  final UserModel? currentUser;
+  final bool isLoadingUser;
+  final String errorMessage;
+
+  const HomePageScreen({
+    super.key,
+    required this.currentUser,
+    required this.isLoadingUser,
+    required this.errorMessage,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: AppColors.primaryGreen,
+                child: currentUser?.name != null && currentUser!.name.isNotEmpty
+                    ? Text(
+                        currentUser!.name[0].toUpperCase(),
+                        style: TextStyle(
+                            color: AppColors.primaryGreen,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold),
+                      )
+                    : Icon(Icons.person,
+                        color: AppColors.primaryGreen, size: 30),
+              ),
+              const SizedBox(width: 12),
+              if (isLoadingUser)
+                const CircularProgressIndicator(strokeWidth: 2)
+              else if (errorMessage.isNotEmpty)
+                Expanded(
+                  child: Text(
+                    errorMessage,
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+              else
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hello, ${currentUser?.name ?? 'Guest'},',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const Text(
+                        'Welcome to StepGreen!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // The MapScreen is now directly embedded into HomePageScreen
+        Expanded(
+          child: MapScreen(),
+        ),
+      ],
     );
   }
 }

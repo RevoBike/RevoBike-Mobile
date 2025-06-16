@@ -145,8 +145,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     try {
       setState(() {
         _isResending = true;
-        resendButtonChild =
-            LoadingAnimationWidget.fallingDot(color: Colors.blue, size: 20);
+        resendButtonChild = LoadingAnimationWidget.fallingDot(
+            color: AppColors.primaryGreen, size: 20);
       });
 
       // TODO: Implement OTP resend with backend

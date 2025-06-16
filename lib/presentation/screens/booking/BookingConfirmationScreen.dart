@@ -5,6 +5,7 @@ import 'package:revobike/data/models/Station.dart'; // Ensure this is the update
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import the RideService
 import 'dart:async';
+import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Station station;
@@ -214,7 +215,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 const Divider(
                                     height: 30,
                                     thickness: 1,
-                                    color: Colors.blueAccent),
+                                    color: AppColors.secondaryGreen),
                                 // Display selected bike ID
                                 Text("Bike ID: ${widget.selectedBikeId}",
                                     style: const TextStyle(
@@ -231,7 +232,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: Colors.blue.shade700,
+                                    color: AppColors.primaryGreen,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -254,10 +255,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       onPressed: _cancelRideStart,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: Colors.blue,
+                        foregroundColor: AppColors.primaryGreen,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: Colors.blue),
+                          side: const BorderSide(color: AppColors.primaryGreen),
                         ),
                       ),
                       child:
@@ -278,7 +279,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 _rideStartError != null ||
                                 _rideId == null
                             ? Colors.grey // Grey out if not ready
-                            : Colors.blue,
+                            : AppColors.primaryGreen,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

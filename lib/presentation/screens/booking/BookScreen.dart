@@ -3,6 +3,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
 
 class BookScreen extends StatefulWidget {
   const BookScreen({super.key});
@@ -120,8 +121,10 @@ class _BookScreenState extends State<BookScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(FontAwesomeIcons.locationDot, color: Colors.green),
-                      Text(_start != null ? "Start Selected" : "Select Start", style: const TextStyle(fontSize: 16)),
+                      const Icon(FontAwesomeIcons.locationDot,
+                          color: Colors.green),
+                      Text(_start != null ? "Start Selected" : "Select Start",
+                          style: const TextStyle(fontSize: 16)),
                       const Icon(FontAwesomeIcons.chevronRight)
                     ],
                   ),
@@ -129,8 +132,13 @@ class _BookScreenState extends State<BookScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(FontAwesomeIcons.locationDot, color: Colors.blueAccent),
-                      Text(_destination != null ? "Destination Selected" : "Select Destination", style: const TextStyle(fontSize: 16)),
+                      const Icon(FontAwesomeIcons.locationDot,
+                          color: AppColors.secondaryGreen),
+                      Text(
+                          _destination != null
+                              ? "Destination Selected"
+                              : "Select Destination",
+                          style: const TextStyle(fontSize: 16)),
                       const Icon(FontAwesomeIcons.chevronRight)
                     ],
                   ),
@@ -139,7 +147,8 @@ class _BookScreenState extends State<BookScreen> {
                     const CircularProgressIndicator()
                   else if (_price != null)
                     Text("Price: Br.${_price!.toStringAsFixed(1)}",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 15),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -150,12 +159,16 @@ class _BookScreenState extends State<BookScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 40, vertical: 12),
                         ),
-                        onPressed: _destination != null && _price != null ? () {} : null,
+                        onPressed: _destination != null && _price != null
+                            ? () {}
+                            : null,
                         child: const Row(
                           children: [
                             Icon(FontAwesomeIcons.check, color: Colors.white),
                             SizedBox(width: 10),
-                            Text("Order", style: TextStyle(fontSize: 18, color: Colors.white)),
+                            Text("Order",
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.white)),
                           ],
                         ),
                       ),
@@ -176,7 +189,9 @@ class _BookScreenState extends State<BookScreen> {
                           children: [
                             Icon(FontAwesomeIcons.xmark, color: Colors.white),
                             SizedBox(width: 10),
-                            Text("Cancel", style: TextStyle(fontSize: 18, color: Colors.white)),
+                            Text("Cancel",
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.white)),
                           ],
                         ),
                       ),

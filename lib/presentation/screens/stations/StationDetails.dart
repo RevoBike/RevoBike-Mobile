@@ -1,251 +1,252 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:revobike/data/models/Station.dart'; // Ensure this is the updated model
-import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Import flutter_svg
+import 'package:revobike/data/models/Station.dart' as station_model;
+import 'package:revobike/data/models/Bike.dart' as bike_model;
+import 'package:revobike/presentation/screens/booking/BikeDetailsScreen.dart'
+    as bike_details_screen;
+import 'package:revobike/utils/location_utils.dart'; // Ensure this file exists and has calculateDistance
+// Removed redundant dart:math as LocationUtils should encapsulate math if needed
 
-class StationDetailsScreen extends StatelessWidget {
-  final Station station;
+import 'package:revobike/presentation/widget/CustomAppBar.dart'; // Import CustomAppBar
+import 'package:revobike/constants/app_colors.dart';
 
-  const StationDetailsScreen({super.key, required this.station});
+class StationDetailsScreen extends StatefulWidget {
+  final station_model.Station startStation;
+  final station_model.Station endStation;
+
+  const StationDetailsScreen({
+    super.key,
+    required this.startStation,
+    required this.endStation,
+  });
+
+  @override
+  State<StationDetailsScreen> createState() => _StationDetailsScreenState();
+}
+
+class _StationDetailsScreenState extends State<StationDetailsScreen> {
+  List<bike_model.BikeModel> _availableBikes = [];
+  bool _isLoadingBikes = true;
+  String? _errorLoadingBikes;
+  double _distanceToDestinationKm = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStationDetails();
+  }
+
+  Future<void> _loadStationDetails() async {
+    setState(() {
+      _isLoadingBikes = true;
+      _errorLoadingBikes = null;
+    });
+
+    try {
+      _availableBikes = List.from(
+          widget.startStation.availableBikes.cast<bike_model.BikeModel>());
+
+      _distanceToDestinationKm = LocationUtils.calculateDistance(
+        widget.startStation.location.coordinates[1], // Latitude
+        widget.startStation.location.coordinates[0], // Longitude
+        widget.endStation.location.coordinates[1], // Latitude
+        widget.endStation.location.coordinates[0], // Longitude
+      );
+
+      setState(() {
+        _isLoadingBikes = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorLoadingBikes = e.toString();
+        _isLoadingBikes = false;
+      });
+    }
+  }
+
+  bool _isBatterySufficient(bike_model.BikeModel bike, double distanceKm) {
+    if (bike.batteryLevel == null || bike.batteryLevel! <= 0) {
+      return false;
+    }
+    // Assuming BikeModel has a 'maxRangeKm' property or a default is defined
+    // If your BikeModel doesn't have maxRangeKm, you'll need a default here.
+    final double maxRangeKm =
+        bike.maxRangeKm ?? 50.0; // Example default max range
+
+    final double estimatedRangeKm = (bike.batteryLevel! / 100.0) * maxRangeKm;
+    final double requiredRangeWithBuffer = distanceKm * 1.1; // 10% buffer
+
+    return estimatedRangeKm >= requiredRangeWithBuffer;
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Find the first available bike ID for the "Book" button
-    final String? firstAvailableBikeId = station.availableBikes.isNotEmpty
-        ? station.availableBikes.first.bikeId
-        : null;
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 250,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage("assets/images/station.png"),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      extendBodyBehindAppBar:
+          true, // Crucial: Allows body content to go behind the AppBar
+      appBar: const CustomAppBar(), // Use your CustomAppBar here
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image container - now using SvgPicture.asset as child directly
+            SizedBox(
+              height: 250, // Fixed height for the image section
+              width: double.infinity, // Ensures it takes full width
+              // No decoration image; SvgPicture is the direct child
+              child: SvgPicture.asset(
+                "assets/images/bike_parking.svg", // Use your SVG asset path
+                fit: BoxFit.cover, // Ensures the SVG covers the container
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.startStation.name,
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black)),
+                  const SizedBox(height: 4),
+                  Row(
                     children: [
-                      Text(station.name,
-                          style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black)),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on,
-                              color: Colors.grey, size: 18),
-                          const SizedBox(width: 4),
-                          // Use station.address for specific address if available, fallback to name
-                          Text(station.address ?? station.name,
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey.shade700)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.phone, color: Colors.blue, size: 18),
-                              SizedBox(width: 4),
-                              Text(
-                                  "+251989341234", // This is hardcoded; consider making it dynamic from station.contact or similar
-                                  style: TextStyle(
-                                      fontSize: 14, color: Colors.blue)),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Icon(Icons.star, color: Colors.orange, size: 18),
-                              SizedBox(width: 4),
-                              Text(
-                                  "4.7 (83 Reviews)", // This is hardcoded; consider making it dynamic
-                                  style: TextStyle(
-                                      fontSize: 14, color: Colors.black87)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          // Use .length for availableBikes as it's a List<BikeModel>
-                          _infoCard("${station.availableBikes.length}",
-                              "Available Bikes"),
-                          // Safely display rate with a fallback if null
-                          _infoCard(
-                              "Br.${station.rate?.toStringAsFixed(2) ?? 'N/A'}/KM",
-                              "Price"),
-                          _infoCard("2 hrs",
-                              "Maximum Time"), // This is hardcoded; consider making it dynamic
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.blue,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                        color: Colors.blueAccent, width: 1)),
-                              ),
-                              onPressed: () {
-                                // Add logic for Get Direction here, e.g., launching maps app
-                                // Use station.location.coordinates[1] for latitude, [0] for longitude
-                                // Example:
-                                // final Uri googleMapsUrl = Uri.parse(
-                                //     'https://www.google.com/maps/dir/?api=1&destination=${station.location.coordinates[1]},${station.location.coordinates[0]}');
-                                // if (await canLaunchUrl(googleMapsUrl)) {
-                                //   await launchUrl(googleMapsUrl);
-                                // } else {
-                                //   ScaffoldMessenger.of(context).showSnackBar(
-                                //       const SnackBar(content: Text('Could not launch map.')));
-                                // }
-                              },
-                              child: const Text("Get Direction"),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8)),
-                              ),
-                              // Enable/disable based on status AND available bikes
-                              onPressed:
-                                  station.status.toLowerCase() == "open" &&
-                                          firstAvailableBikeId != null
-                                      ? () {
+                      const Icon(Icons.location_on,
+                          color: Colors.grey, size: 18),
+                      const SizedBox(width: 4),
+                      Text(
+                          widget.startStation.address ??
+                              widget.startStation.name,
+                          style: TextStyle(
+                              fontSize: 14, color: Colors.grey.shade700)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _infoCard("${widget.startStation.availableBikes.length}",
+                          "Bikes at Station"),
+                      _infoCard(
+                          "${_distanceToDestinationKm.toStringAsFixed(1)} KM",
+                          "Trip Distance"),
+                      _infoCard(
+                          "Br.${widget.startStation.rate?.toStringAsFixed(2) ?? 'N/A'}/KM",
+                          "Rate"),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text("Available Bikes",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+
+                  _isLoadingBikes
+                      ? const Center(child: CircularProgressIndicator())
+                      : _errorLoadingBikes != null
+                          ? Center(
+                              child: Text(
+                                  'Error loading bikes: ${_errorLoadingBikes!}'),
+                            )
+                          : _availableBikes.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'No bikes found at this station.',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.grey),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _availableBikes.length,
+                                  itemBuilder: (context, index) {
+                                    final bike = _availableBikes[index];
+                                    final bool isSufficient =
+                                        _isBatterySufficient(
+                                            bike, _distanceToDestinationKm);
+
+                                    return Card(
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      elevation: 2,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                      child: ListTile(
+                                        leading: Icon(
+                                          FontAwesomeIcons.bicycle,
+                                          color: isSufficient
+                                              ? AppColors.primaryGreen
+                                              : Colors.red,
+                                        ),
+                                        title: Text('Bike ID: ${bike.bikeId}',
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold)),
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Battery: ${bike.batteryLevel ?? 'N/A'}%',
+                                              style: TextStyle(
+                                                color: isSufficient
+                                                    ? Colors.green
+                                                    : Colors.orange,
+                                              ),
+                                            ),
+                                            Text(
+                                                'Model: ${bike.model ?? 'Standard'}'),
+                                            Text(
+                                              isSufficient
+                                                  ? 'Sufficient for trip'
+                                                  : 'Insufficient battery for trip',
+                                              style: TextStyle(
+                                                color: isSufficient
+                                                    ? Colors.green.shade700
+                                                    : Colors.red,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        trailing: const Icon(
+                                            Icons.arrow_forward_ios,
+                                            size: 16),
+                                        onTap: () {
                                           Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      BookingConfirmationScreen(
-                                                        station: station,
-                                                        selectedBikeId:
-                                                            firstAvailableBikeId, // Pass the first available bike ID
-                                                      )));
-                                        }
-                                      : () {
-                                          // Show snackbar if no bikes or not open
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                firstAvailableBikeId == null
-                                                    ? 'No bikes available at this station.'
-                                                    : 'This station is currently ${station.status ?? 'closed'}.',
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  bike_details_screen
+                                                      .BikeDetailsScreen(
+                                                selectedBike: bike,
+                                                startStation:
+                                                    widget.startStation,
+                                                endStation: widget.endStation,
+                                                isBatterySufficient:
+                                                    isSufficient,
+                                                distanceToDestinationKm:
+                                                    _distanceToDestinationKm,
                                               ),
                                             ),
                                           );
                                         },
-                              child: Text(
-                                firstAvailableBikeId == null
-                                    ? "No Bikes"
-                                    : "Book",
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 18),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Text("About",
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      // Consider using station.description if your API provides it
-                      const Text(
-                        "This station is strategically located to provide convenient access to bikes for commuters and visitors. It features state-of-the-art security and easy-to-use booking system for a seamless experience.", // Example description, replace with dynamic data if available
-                        style: TextStyle(fontSize: 14, color: Colors.black54),
-                      ),
-                      const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: SizedBox(
-                          height: 200,
-                          child: GoogleMap(
-                            initialCameraPosition: CameraPosition(
-                              // Access coordinates from the nested location object
-                              target: LatLng(station.location.coordinates[1],
-                                  station.location.coordinates[0]),
-                              zoom: 14,
-                            ),
-                            markers: {
-                              Marker(
-                                markerId: MarkerId(station.id),
-                                // Access coordinates from the nested location object
-                                position: LatLng(
-                                    station.location.coordinates[1],
-                                    station.location.coordinates[0]),
-                                infoWindow: InfoWindow(
-                                  title: station.name,
-                                  snippet:
-                                      'Available: ${station.availableBikes.length}',
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                            },
-                            zoomControlsEnabled: false, // Hide zoom controls
-                            myLocationButtonEnabled:
-                                false, // Hide my location button
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: 25,
-            left: 20,
-            child: Container(
-              width: 45,
-              height: 45,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
+                  const SizedBox(height: 16),
+                  // Removed old GoogleMap widget
                 ],
               ),
-              child: IconButton(
-                icon: const Icon(FontAwesomeIcons.arrowLeft, size: 20),
-                color: Colors.black,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+      // Removed the redundant Positioned back button, as CustomAppBar handles it
     );
   }
 
@@ -254,7 +255,9 @@ class StationDetailsScreen extends StatelessWidget {
       children: [
         Text(title,
             style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryGreen)),
         const SizedBox(height: 4),
         Text(subtitle,
             style: const TextStyle(fontSize: 12, color: Colors.black54)),

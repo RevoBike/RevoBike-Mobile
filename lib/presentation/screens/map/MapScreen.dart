@@ -8,6 +8,7 @@ import 'package:revobike/data/models/Station.dart'; // Import the updated Statio
 import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart';
 import 'package:revobike/presentation/screens/stations/StationDetails.dart';
 import 'package:revobike/api/station_service.dart'; // Import your StationService
+import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -267,7 +268,7 @@ class _MapScreenState extends State<MapScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Icon(FontAwesomeIcons.doorOpen,
-                      size: 20, color: Colors.blue),
+                      size: 20, color: AppColors.primaryGreen),
                   const SizedBox(width: 8),
                   Text(
                     "Status: ${station.status}",
@@ -284,8 +285,10 @@ class _MapScreenState extends State<MapScreen> {
                       onPressed: () {
                         Navigator.of(context).pop();
                         Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) =>
-                                StationDetailsScreen(station: station)));
+                            builder: (context) => StationDetailsScreen(
+                                  startStation: station,
+                                  endStation: station,
+                                )));
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.lightBlue),
@@ -331,7 +334,7 @@ class _MapScreenState extends State<MapScreen> {
                         backgroundColor:
                             station.status.toLowerCase() == "open" &&
                                     firstAvailableBikeId != null
-                                ? Colors.blueAccent
+                                ? AppColors.secondaryGreen
                                 : Colors.grey, // Grey out if disabled
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -364,7 +367,8 @@ class _MapScreenState extends State<MapScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.location_on, color: Colors.blueAccent, size: 20),
+              const Icon(Icons.location_on,
+                  color: AppColors.secondaryGreen, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(

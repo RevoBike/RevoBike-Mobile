@@ -151,25 +151,55 @@ class RideService {
   /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<List<Map<String, dynamic>>> getRideHistory() async {
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.rideHistoryEndpoint}');
+      final url = Uri.parse(
+          '${ApiConstants.baseUrl}${ApiConstants.rideHistoryEndpoint}');
       final headers = await _getAuthHeaders();
 
       final response = await _client.get(url, headers: headers);
 
-      print('Get Ride History response: ${response.statusCode} - ${response.body}');
+      print(
+          'Get Ride History response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final List<dynamic> responseData = jsonDecode(response.body);
-        // Ensure the response is a list of maps
-        return responseData.cast<Map<String, dynamic>>();
+        // --- START OF MODIFICATION FOR THE TYPE ERROR ---
+        final dynamic responseData =
+            jsonDecode(response.body); // Decode to dynamic first
+
+        if (responseData is List) {
+          // Case 1: The response is directly an array (as your initial example showed)
+          return List<Map<String, dynamic>>.from(responseData);
+        } else if (responseData is Map<String, dynamic>) {
+          // Case 2: The response is a map, check for common keys that contain the list of rides
+          if (responseData.containsKey('data') &&
+              responseData['data'] is List) {
+            return List<Map<String, dynamic>>.from(responseData['data']);
+          } else if (responseData.containsKey('rides') &&
+              responseData['rides'] is List) {
+            // Check for a 'rides' key
+            return List<Map<String, dynamic>>.from(responseData['rides']);
+          }
+          // If it's a map but doesn't contain a known list key ('data' or 'rides')
+          throw Exception(
+              "Unexpected map structure for ride history. Expected 'data' or 'rides' key containing a list.");
+        } else {
+          // If the top-level response is neither a List nor a Map (e.g., null, string, number directly)
+          throw Exception(
+              "Unexpected top-level response format for ride history: ${responseData.runtimeType}");
+        }
+        // --- END OF MODIFICATION ---
       } else {
+        // Handle non-2xx status codes (error responses from the server)
         final responseData = jsonDecode(response.body);
-        final message = responseData['message'] ?? 'Failed to fetch ride history';
+        final message = (responseData is Map<String, dynamic> &&
+                responseData.containsKey('message'))
+            ? responseData[
+                'message'] // Extract 'message' if available in the error response
+            : 'Failed to fetch ride history with status ${response.statusCode}';
         throw Exception(message);
       }
     } catch (e) {
       print('Error fetching ride history: $e');
-      rethrow;
+      rethrow; // Re-throw to propagate the error up
     }
   }
 }

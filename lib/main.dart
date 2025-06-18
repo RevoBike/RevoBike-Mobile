@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:revobike/presentation/screens/auth/AuthCheckScreen.dart'; // Import AuthCheckScreen
+import 'package:revobike/presentation/screens/auth/AuthCheckScreen.dart'; // Keep this import for later
+import 'package:revobike/presentation/screens/onBoarding/OnBoardingScreen.dart'; // Import OnboardingScreen
 import 'package:revobike/constants/app_colors.dart';
 
 void main() {
@@ -21,44 +22,59 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home:
-          const AuthCheckScreen(), // IMPORTANT: Set AuthCheckScreen as the initial home widget
+          const SplashScreen(), // IMPORTANT: Set SplashScreen as the initial home widget
     );
   }
 }
 
-// You no longer need a custom SplashScreen widget if AuthCheckScreen handles the initial loading.
-// If you want a branding splash screen before AuthCheckScreen, you could build it
-// as a separate, very short-lived screen that then navigates to AuthCheckScreen.
-// For simplicity, AuthCheckScreen will now serve as your initial loading/check screen.
-
-// If you still want a visual splash screen before AuthCheckScreen:
-/*
-class SplashScreen extends StatelessWidget {
+// Your SplashScreen widget
+class SplashScreen extends StatefulWidget {
+  // Changed to StatefulWidget to manage its own timer
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const AuthCheckScreen()),
-      );
-    });
+  State<SplashScreen> createState() => _SplashScreenState();
+}
 
-    return const Scaffold(
-      backgroundColor: Colors.white,
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _navigateToNextScreen();
+  }
+
+  _navigateToNextScreen() async {
+    // You can make this duration longer if your splash animation/branding takes more time
+    await Future.delayed(
+        const Duration(seconds: 2)); // Display splash for 2 seconds
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+            builder: (context) =>
+                const OnboardingScreen()), // Navigate to OnboardingScreen
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white, // Or your desired splash background color
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // You can replace this with an Image.asset for your logo
             Text(
               'StepGreen',
-              style: TextStyle(
-                fontSize: 24,
+              style: GoogleFonts.rubik(
+                // Use GoogleFonts for consistency
+                fontSize: 32,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primaryGreen,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
             ),
@@ -68,4 +84,3 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
-*/

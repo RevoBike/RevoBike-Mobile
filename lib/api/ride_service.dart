@@ -36,17 +36,21 @@ class RideService {
     };
   }
 
-  /// Starts a ride by sending the bike ID to the backend.
+  /// Starts a ride by sending the bike ID (in path and body) and optional initial location to the backend.
   ///
-  /// This method makes a POST request to the `/rides/start/{bikeId}` endpoint.
-  /// It expects a response containing 'success: true' and a 'ride' object
-  /// which should include the `rideId` and potentially other initial ride details.
+  /// This method makes a POST request to the `/rides/start/:bikeId` endpoint.
+  /// It expects a response containing `{ "success": true, "data": { ...ride details... } }`.
   ///
-  /// [bikeId]: The unique identifier of the bike to be started.
-  /// Returns a [Future<Map<String, dynamic>>] containing the details of the started ride.
+  /// [bikeId]: The unique identifier of the bike to be started. This is used in the URL path AND the request body.
+  /// [initialLatitude]: Optional. The latitude of the user's starting location.
+  /// [initialLongitude]: Optional. The longitude of the user's starting location.
+  /// Returns a [Future<Map<String, dynamic>>] containing the details of the started ride (the 'data' object).
   /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<Map<String, dynamic>> startRide({
     required String bikeId,
+    // Keep these optional parameters as they might be sent from the UI
+    double? initialLatitude,
+    double? initialLongitude,
   }) async {
     try {
       // Construct the full URL using base URL and the start ride endpoint,
@@ -55,27 +59,61 @@ class RideService {
           '${ApiConstants.baseUrl}${ApiConstants.startRideEndpoint}/$bikeId');
       final headers = await _getAuthHeaders(); // Get authenticated headers
 
-      // Make a POST request. Assuming no specific body is required for this endpoint
-      // other than the bikeId in the URL path. If your backend requires an empty JSON body,
-      // you can uncomment `body: jsonEncode({})`.
+      // --- CRUCIAL MODIFICATION 1: CONSTRUCTING THE REQUEST BODY ---
+      // The backend explicitly expects "bikeId" in the JSON body.
+      final Map<String, dynamic> requestBody = {
+        "bikeId": bikeId, // Required in body as per backend info
+      };
+      // Add optional initial location if provided
+      if (initialLatitude != null) {
+        requestBody['initialLatitude'] =
+            initialLatitude; // Ensure correct key name for backend
+      }
+      if (initialLongitude != null) {
+        requestBody['initialLongitude'] =
+            initialLongitude; // Ensure correct key name for backend
+      }
+      // --- END OF CRUCIAL MODIFICATION 1 ---
+
       final response = await _client.post(
         url,
         headers: headers,
-        // body: jsonEncode({}), // Uncomment if your backend expects an empty JSON body for this POST
+        body: jsonEncode(requestBody), // Encode the constructed body
       );
 
       print(
           'Start Ride response: ${response.statusCode} - ${response.body}'); // Log full response
 
-      final responseData = jsonDecode(response.body); // Decode JSON response
+      final dynamic responseData =
+          jsonDecode(response.body); // Decode JSON response
 
-      // Check for successful HTTP status code (2xx range)
+      // Check for successful HTTP status code (2xx range), typically 201 for creation
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Return the entire response data as the ride object (no 'success' field expected)
-        return responseData as Map<String, dynamic>;
+        // --- CRUCIAL MODIFICATION 2: PARSING THE SUCCESS RESPONSE ---
+        // Backend specifies response: { "success": true, "data": { ...ride details... } }
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('data')) {
+          final dynamic dataContent = responseData['data'];
+          if (dataContent is Map<String, dynamic>) {
+            // Return the 'data' object which contains the ride details
+            return dataContent;
+          } else {
+            throw Exception(
+                "Invalid 'startRide' success response format: 'data' field is not an object.");
+          }
+        } else {
+          // If success status but 'data' key is missing or response is not a Map
+          throw Exception(
+              "Invalid 'startRide' success response format. Expected a map with 'data' key.");
+        }
+        // --- END OF CRUCIAL MODIFICATION 2 ---
       } else {
-        // For non-2xx status codes, extract backend's error message or provide a generic one
-        final message = responseData['message'] ?? 'Failed to start ride';
+        // Handle non-2xx status codes (error responses from the server)
+        // Extract 'message' from the response if available, otherwise provide a generic one.
+        final message = (responseData is Map<String, dynamic> &&
+                responseData.containsKey('message'))
+            ? responseData['message']
+            : 'Failed to start ride with status ${response.statusCode}';
         throw Exception(message);
       }
     } catch (e) {
@@ -161,7 +199,6 @@ class RideService {
           'Get Ride History response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // --- START OF MODIFICATION FOR THE TYPE ERROR ---
         final dynamic responseData =
             jsonDecode(response.body); // Decode to dynamic first
 
@@ -186,7 +223,6 @@ class RideService {
           throw Exception(
               "Unexpected top-level response format for ride history: ${responseData.runtimeType}");
         }
-        // --- END OF MODIFICATION ---
       } else {
         // Handle non-2xx status codes (error responses from the server)
         final responseData = jsonDecode(response.body);

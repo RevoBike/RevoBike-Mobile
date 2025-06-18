@@ -23,4 +23,6 @@ class ApiConstants {
       '/rides/start'; // To start a ride: /rides/start/{id} (where {id} is bikeId)
   static const String endRideEndpoint =
       '/rides/end'; // To end a ride: /rides/end/{rideId}
+  static const String rideHistoryEndpoint =
+      '/rides/history'; // To get ride history
 }

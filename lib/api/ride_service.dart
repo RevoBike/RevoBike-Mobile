@@ -143,4 +143,33 @@ class RideService {
       rethrow; // Re-throw to propagate the error up the call stack
     }
   }
+
+  /// Fetches the ride history for the authenticated user.
+  ///
+  /// Makes a GET request to the `/rides/history` endpoint.
+  /// Returns a [Future<List<Map<String, dynamic>>] representing the list of rides.
+  /// Throws an [Exception] if the API call fails or the response is invalid.
+  Future<List<Map<String, dynamic>>> getRideHistory() async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.rideHistoryEndpoint}');
+      final headers = await _getAuthHeaders();
+
+      final response = await _client.get(url, headers: headers);
+
+      print('Get Ride History response: ${response.statusCode} - ${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final List<dynamic> responseData = jsonDecode(response.body);
+        // Ensure the response is a list of maps
+        return responseData.cast<Map<String, dynamic>>();
+      } else {
+        final responseData = jsonDecode(response.body);
+        final message = responseData['message'] ?? 'Failed to fetch ride history';
+        throw Exception(message);
+      }
+    } catch (e) {
+      print('Error fetching ride history: $e');
+      rethrow;
+    }
+  }
 }

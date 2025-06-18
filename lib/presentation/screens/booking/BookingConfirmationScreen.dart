@@ -36,7 +36,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void initState() {
     super.initState();
     _startCountdown();
-    _startRideWithBackend(); // Initiate ride start with backend
+    _startRideWithBackend(); // Automatically start ride on screen load
   }
 
   @override
@@ -58,14 +58,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       );
 
       setState(() {
-        _rideId = rideDetails['rideId'] as String?; // Adjust key if different
-        // If your backend returns bike details (like battery life) here,
-        // you can capture them:
-        // _bookedBatteryLife = rideDetails['bike']['batteryLife'] as int?;
+        _rideId = rideDetails['id'] as String?; // Changed from 'rideId' to 'id'
         _isLoadingRideStart = false;
       });
 
-      // If ride started successfully, the countdown continues as a "time to get on bike"
+      if (_rideId != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RideInProgressScreen(
+              rideId: _rideId!,
+              bikeId: widget.selectedBikeId,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       setState(() {
         _rideStartError = e.toString().contains('Exception:')
@@ -73,12 +80,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             : e.toString();
         _isLoadingRideStart = false;
       });
-      // Immediately cancel countdown and show error if ride fails to start
       _countdownTimer?.cancel();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to start ride: ${_rideStartError!}')),
       );
-      // Automatically navigate back if ride couldn't start
       Navigator.pop(context);
     }
   }
@@ -261,32 +266,33 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           side: const BorderSide(color: AppColors.primaryGreen),
                         ),
                       ),
-                      child:
-                          const Text("Cancel Ride"), // Changed to "Cancel Ride"
+                      child: const Text("Cancel Ride"),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      // Only allow Confirm if ride started successfully and not loading/error
-                      onPressed: _isLoadingRideStart ||
-                              _rideStartError != null ||
-                              _rideId == null
-                          ? null // Disable button
-                          : _navigateToRideInProgress, // Enable button
+                      // Start ride on button press
+                      onPressed: _isLoadingRideStart ? null : _startRideWithBackend,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _isLoadingRideStart ||
-                                _rideStartError != null ||
-                                _rideId == null
-                            ? Colors.grey // Grey out if not ready
+                        backgroundColor: _isLoadingRideStart
+                            ? Colors.grey
                             : AppColors.primaryGreen,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child:
-                          const Text("Start Ride"), // Changed to "Start Ride"
+                      child: _isLoadingRideStart
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text("Start Ride"),
                     ),
                   ),
                 ],

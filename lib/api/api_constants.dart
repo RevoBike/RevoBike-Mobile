@@ -1,7 +1,7 @@
 // lib/api/api_constants.dart
 class ApiConstants {
   static const String baseUrl =
-      'https://backend-ge4m.onrender.com/api'; // Your backend's base URL
+      'https://backend-ge4m.onrender.com/api'; // Updated backend base URL
 
   // Authentication Endpoints
   static const String loginEndpoint =

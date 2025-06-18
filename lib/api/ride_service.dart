@@ -71,16 +71,8 @@ class RideService {
 
       // Check for successful HTTP status code (2xx range)
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Verify backend's success flag and the presence of the 'ride' data
-        if (responseData['success'] == true && responseData['ride'] != null) {
-          // Return the 'ride' object as a map of dynamic values
-          return responseData['ride'] as Map<String, dynamic>;
-        } else {
-          // If success is false or ride data is missing, throw a specific exception
-          final message = responseData['message'] ??
-              'Ride start successful but no valid ride details received.';
-          throw Exception(message);
-        }
+        // Return the entire response data as the ride object (no 'success' field expected)
+        return responseData as Map<String, dynamic>;
       } else {
         // For non-2xx status codes, extract backend's error message or provide a generic one
         final message = responseData['message'] ?? 'Failed to start ride';
@@ -138,17 +130,8 @@ class RideService {
 
       // Check for successful HTTP status code (2xx range)
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Verify backend's success flag and the presence of ride details
-        if (responseData['success'] == true &&
-            responseData['rideDetails'] != null) {
-          // Return the 'rideDetails' object
-          return responseData['rideDetails'] as Map<String, dynamic>;
-        } else {
-          // If success is false or rideDetails are missing, throw a specific exception
-          final message = responseData['message'] ??
-              'Ride end successful but no valid ride details received.';
-          throw Exception(message);
-        }
+        // Return the entire response data as the ride details object (no 'success' field expected)
+        return responseData as Map<String, dynamic>;
       } else {
         // For non-2xx status codes, extract backend's error message or provide a generic one
         final message = responseData['message'] ?? 'Failed to end ride';

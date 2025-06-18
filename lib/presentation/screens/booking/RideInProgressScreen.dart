@@ -4,7 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as loc_lib; // Alias location package
 import 'package:geolocator/geolocator.dart'; // Already imported
 import 'package:revobike/api/ride_service.dart'; // Import RideService
-import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Ensure correct path for PaymentScreen
+import 'package:revobike/presentation/screens/booking/PaymentPopup.dart'; // Added import for PaymentPopup
 import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
 
 class RideInProgressScreen extends StatefulWidget {
@@ -136,11 +136,17 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
         _isLoadingEndRide = false;
       });
 
-      // Navigate to payment screen, potentially passing rideEndDetails
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => PaymentScreen(rideDetails: rideEndDetails)),
+      // Show payment popup dialog instead of navigating to payment screen
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => PaymentPopup(
+          rideDetails: rideEndDetails,
+          onPaymentSelected: () {
+            // Handle post-payment logic here, e.g., navigate to home or ride summary
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+        ),
       );
     } catch (e) {
       setState(() {

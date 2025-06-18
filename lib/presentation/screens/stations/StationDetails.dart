@@ -6,6 +6,7 @@ import 'package:revobike/data/models/Bike.dart' as bike_model;
 import 'package:revobike/data/models/Station.dart' as station_model;
 import 'package:revobike/presentation/screens/booking/BikeDetailsScreen.dart'
     as bike_details_screen;
+import 'package:revobike/presentation/screens/booking/BookingConfirmationScreen.dart'; // Added import for BookingConfirmationScreen
 import 'package:revobike/utils/location_utils.dart'; // Ensure this file exists and has calculateDistance
 // Removed redundant dart:math as LocationUtils should encapsulate math if needed
 
@@ -45,8 +46,11 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
     });
 
     try {
-      _availableBikes = List.from(
-          widget.startStation.availableBikes.cast<bike_model.BikeModel>());
+      // Filter available bikes to only those that are available for booking
+      _availableBikes = widget.startStation.availableBikes
+          .cast<bike_model.BikeModel>()
+          .where((bike) => bike.status == 'available')
+          .toList();
 
       _distanceToDestinationKm = LocationUtils.calculateDistance(
         widget.startStation.location.coordinates[1], // Latitude
@@ -176,64 +180,99 @@ class _StationDetailsScreenState extends State<StationDetailsScreen> {
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(10)),
-                                      child: ListTile(
-                                        leading: Icon(
-                                          FontAwesomeIcons.bicycle,
-                                          color: isSufficient
-                                              ? AppColors.primaryGreen
-                                              : Colors.red,
-                                        ),
-                                        title: Text('Bike ID: ${bike.bikeId}',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        subtitle: Column(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              'Battery: ${bike.batteryLevel ?? 'N/A'}%',
-                                              style: TextStyle(
+                                            ListTile(
+                                              leading: Icon(
+                                                FontAwesomeIcons.bicycle,
                                                 color: isSufficient
-                                                    ? Colors.green
-                                                    : Colors.orange,
+                                                    ? AppColors.primaryGreen
+                                                    : Colors.red,
+                                              ),
+                                              title: Text('Bike ID: ${bike.bikeId}',
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              subtitle: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Battery: ${bike.batteryLevel ?? 'N/A'}%',
+                                                    style: TextStyle(
+                                                      color: isSufficient
+                                                          ? Colors.green
+                                                          : Colors.orange,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                      'Model: ${bike.model ?? 'Standard'}'),
+                                                  Text(
+                                                    isSufficient
+                                                        ? 'Sufficient for trip'
+                                                        : 'Insufficient battery for trip',
+                                                    style: TextStyle(
+                                                      color: isSufficient
+                                                          ? Colors.green.shade700
+                                                          : Colors.red,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                            Text(
-                                                'Model: ${bike.model ?? 'Standard'}'),
-                                            Text(
-                                              isSufficient
-                                                  ? 'Sufficient for trip'
-                                                  : 'Insufficient battery for trip',
-                                              style: TextStyle(
-                                                color: isSufficient
-                                                    ? Colors.green.shade700
-                                                    : Colors.red,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            bike_details_screen
+                                                                .BikeDetailsScreen(
+                                                          selectedBike: bike,
+                                                          startStation:
+                                                              widget.startStation,
+                                                          endStation:
+                                                              widget.endStation,
+                                                          isBatterySufficient:
+                                                              isSufficient,
+                                                          distanceToDestinationKm:
+                                                              _distanceToDestinationKm,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: const Text('View Detail'),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            BookingConfirmationScreen(
+                                                          station:
+                                                              widget.startStation,
+                                                          selectedBikeId:
+                                                              bike.bikeId,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: const Text('Book Now'),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                        trailing: const Icon(
-                                            Icons.arrow_forward_ios,
-                                            size: 16),
-                                        onTap: () {
-                                          Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  bike_details_screen
-                                                      .BikeDetailsScreen(
-                                                selectedBike: bike,
-                                                startStation:
-                                                    widget.startStation,
-                                                endStation: widget.endStation,
-                                                isBatterySufficient:
-                                                    isSufficient,
-                                                distanceToDestinationKm:
-                                                    _distanceToDestinationKm,
-                                              ),
-                                            ),
-                                          );
-                                        },
                                       ),
                                     );
                                   },

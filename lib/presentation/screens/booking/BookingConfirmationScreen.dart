@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
-import 'package:revobike/data/models/Station.dart'; // Ensure this is the updated Station model
+import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import the RideService
 import 'dart:async';
-import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Station station;
-  final String selectedBikeId; // NEW: Requires the specific bike ID
+  final String selectedBikeId;
 
   const BookingConfirmationScreen({
     super.key,
     required this.station,
-    required this.selectedBikeId, // Make selectedBikeId required
+    required this.selectedBikeId,
   });
 
   @override
@@ -23,10 +22,11 @@ class BookingConfirmationScreen extends StatefulWidget {
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
-  final RideService _rideService = RideService(); // Instantiate RideService
-  String? _rideId; // To store the rideId received from start ride API
-  bool _isLoadingRideStart = false; // Initial state: not loading
-  String? _rideStartError; // Stores API error message for starting ride
+  final RideService _rideService = RideService(); // Reintroduced RideService
+
+  String? _rideId;
+  bool _isLoadingRideStart = false;
+  String? _rideStartError;
 
   Timer? _countdownTimer;
   int _countdownSeconds = 300; // 5 minutes
@@ -34,9 +34,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   @override
   void initState() {
     super.initState();
-    _startCountdown(); // Start the countdown for confirmation
-    // Removed _startRideWithBackend() from initState()
-    // The ride will now start only when the user presses the "Start Ride" button.
+    _startCountdown();
+    // Call the actual API to start the ride
+    _startRideApiCall();
   }
 
   @override
@@ -45,68 +45,33 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     super.dispose();
   }
 
-  // Method to initiate ride start with the backend
-  Future<void> _startRideWithBackend() async {
-    // Only attempt to start ride if not already loading and no error occurred
-    if (_isLoadingRideStart || _rideStartError != null) return;
-
+  // Actual API call to start the ride
+  void _startRideApiCall() async {
     setState(() {
       _isLoadingRideStart = true;
-      _rideStartError = null; // Clear previous errors
+      _rideStartError = null;
     });
 
     try {
-      final rideDetails = await _rideService.startRide(
-        bikeId: widget.selectedBikeId,
-        // You might need to pass initial location (lat/lng) here
-        // if your API requires it for the startRide endpoint.
-        // Example: initialLatitude: widget.station.location.lat,
-        //          initialLongitude: widget.station.location.lng,
-      );
+      final Map<String, dynamic> rideResponse =
+          await _rideService.startRide(bikeId: widget.selectedBikeId);
 
-      // Assuming your startRide API returns a map with an 'id' key for the new ride
-      setState(() {
-        _rideId = rideDetails['id'] as String?;
-        _isLoadingRideStart = false;
-      });
-
-      if (_rideId != null) {
-        _countdownTimer
-            ?.cancel(); // Cancel countdown once ride successfully started
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RideInProgressScreen(
-              rideId: _rideId!,
-              bikeId:
-                  widget.selectedBikeId, // Pass bikeId to RideInProgressScreen
-            ),
-          ),
-        );
-      } else {
-        // If API call was successful but rideId is null (unexpected)
+      if (mounted) {
         setState(() {
-          _rideStartError = "Failed to get ride ID from response.";
+          _rideId = rideResponse['id'] as String; // Assuming your backend returns 'id' for the new ride
+          _isLoadingRideStart = false;
         });
-        _countdownTimer?.cancel(); // Stop timer on unexpected success
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start ride: ${_rideStartError!}')),
-        );
       }
     } catch (e) {
-      // Handle API call errors
-      setState(() {
-        _rideStartError = e.toString().contains('Exception:')
-            ? e.toString().split('Exception: ')[1]
-            : 'Unknown error: $e'; // Provide a more user-friendly message
-        _isLoadingRideStart = false;
-      });
-      _countdownTimer?.cancel(); // Stop timer on error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to start ride: ${_rideStartError!}')),
-      );
-      // Optionally pop the screen or show a retry button here
-      // Navigator.pop(context); // You might want to remove this if you have a retry button
+      if (mounted) {
+        setState(() {
+          _rideStartError = e.toString();
+          _isLoadingRideStart = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start ride: $e')),
+        );
+      }
     }
   }
 
@@ -121,23 +86,30 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       } else {
         timer.cancel();
         if (mounted) {
-          // If time runs out, automatically cancel the booking/confirmation
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Booking confirmation expired.')),
-          );
-          _cancelRideStart(); // This will pop the screen
+          _cancelRideStart();
         }
       }
     });
   }
 
-  // Handles cancellation before ride fully begins (e.g., user cancels during countdown)
+  void _navigateToRideInProgress() {
+    _countdownTimer?.cancel();
+    // Navigate to RideInProgressScreen, passing actual rideId and bikeId
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RideInProgressScreen(
+          rideId: _rideId!, // Ensure _rideId is not null before navigating
+          bikeId: widget.selectedBikeId,
+        ),
+      ),
+    );
+  }
+
   void _cancelRideStart() {
     _countdownTimer?.cancel();
-    // TODO: Potentially call an API here to 'cancel' the booking on backend
-    // if the user decides not to proceed within the countdown.
-    Navigator.pop(
-        context); // Go back to the previous screen (e.g., bike selection)
+    // Potentially call an API to cancel the initiated ride if it wasn't picked up
+    Navigator.pop(context);
   }
 
   @override
@@ -173,7 +145,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: _isLoadingRideStart // Show loading when starting ride
+                  child: _isLoadingRideStart
                       ? Column(
                           children: [
                             Lottie.asset("assets/animations/bikee.json",
@@ -181,34 +153,29 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             const SizedBox(height: 15),
                             const CircularProgressIndicator(),
                             const SizedBox(height: 10),
-                            const Text('Attempting to start your ride...',
+                            const Text('Initiating ride via API...',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 16)),
                           ],
                         )
-                      : _rideStartError !=
-                              null // Show error if ride start failed
+                      : _rideStartError != null
                           ? Column(
                               children: [
-                                const Icon(Icons.error,
-                                    color: Colors.red, size: 60),
+                                const Icon(Icons.error, color: Colors.red, size: 60),
                                 const SizedBox(height: 15),
                                 Text(
                                   'Ride Start Error: ${_rideStartError!}',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontSize: 16, color: Colors.red),
+                                  style: const TextStyle(fontSize: 16, color: Colors.red),
                                 ),
                                 const SizedBox(height: 15),
                                 ElevatedButton(
-                                  onPressed:
-                                      _startRideWithBackend, // Allow retry
+                                  onPressed: _startRideApiCall, // Allow retry for API call
                                   child: const Text('Retry Ride Start'),
                                 ),
                               ],
                             )
-                          : // Show confirmation details if not loading and no error
-                          Column(
+                          : Column(
                               children: [
                                 Lottie.asset("assets/animations/bikee.json",
                                     width: 200, height: 200, fit: BoxFit.cover),
@@ -217,28 +184,24 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     style: const TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold)),
-                                Text(widget.station.name,
+                                Text(widget.station.address ?? widget.station.name,
                                     style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey.shade600)),
+                                        fontSize: 16, color: Colors.grey.shade600)),
                                 const Divider(
                                     height: 30,
                                     thickness: 1,
-                                    color: AppColors.secondaryGreen),
-                                // Display selected bike ID
+                                    color: Colors.blueAccent),
                                 Text("Bike ID: ${widget.selectedBikeId}",
                                     style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold)),
-                                Text(
-                                    "Pricing Rate: Br.${widget.station.rate?.toStringAsFixed(2) ?? 'N/A'} per km",
+                                        fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text("Pricing Rate: Br.${widget.station.rate?.toStringAsFixed(2) ?? 'N/A'} per km",
                                     style: const TextStyle(fontSize: 16)),
                                 const SizedBox(height: 20),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 16, vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primaryGreen,
+                                    color: Colors.blue.shade700,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -261,10 +224,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       onPressed: _cancelRideStart,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primaryGreen,
+                        foregroundColor: Colors.blue,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: AppColors.primaryGreen),
+                          side: const BorderSide(color: Colors.blue),
                         ),
                       ),
                       child: const Text("Cancel Ride"),
@@ -273,31 +236,20 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      // Only enable if not loading and no error
-                      onPressed: (_isLoadingRideStart ||
-                              _rideStartError != null)
+                      // Enable button only if not loading, no error, and _rideId is set by API
+                      onPressed: _isLoadingRideStart || _rideStartError != null || _rideId == null
                           ? null
-                          : _startRideWithBackend, // Call the method to start the ride
+                          : _navigateToRideInProgress,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            (_isLoadingRideStart || _rideStartError != null)
-                                ? Colors.grey
-                                : AppColors.primaryGreen,
+                        backgroundColor: _isLoadingRideStart || _rideStartError != null || _rideId == null
+                            ? Colors.grey
+                            : Colors.blue,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: _isLoadingRideStart
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text("Start Ride"),
+                      child: const Text("Start Ride"),
                     ),
                   ),
                 ],

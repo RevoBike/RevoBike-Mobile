@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart' as loc_lib; // Alias location package
-import 'package:geolocator/geolocator.dart'; // Already imported
+import 'package:lottie/lottie.dart';
+import 'package:revobike/presentation/screens/booking/PaymentScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import RideService
-import 'package:revobike/presentation/screens/booking/PaymentPopup.dart'; // Added import for PaymentPopup
-import 'package:revobike/constants/app_colors.dart'; // Import your AppColors
+import 'dart:async'; // For Timer and Future.delayed if needed for UI, but main logic is API
+// import 'package:google_maps_flutter/google_maps_flutter.dart'; // Uncomment if adding map
+// import 'package:location/location.dart' as loc_lib; // Uncomment if adding map
 
 class RideInProgressScreen extends StatefulWidget {
-  final String rideId; // NEW: Requires the ride ID
-  // You might also pass other initial ride details like bike ID, start time, etc.
-  final String bikeId; // Assuming you might want to display this
+  final String rideId;
+  final String bikeId;
 
   const RideInProgressScreen({
     super.key,
     required this.rideId,
-    this.bikeId = 'N/A', // Default to N/A if not passed
+    required this.bikeId,
   });
 
   @override
@@ -23,296 +22,188 @@ class RideInProgressScreen extends StatefulWidget {
 }
 
 class _RideInProgressScreenState extends State<RideInProgressScreen> {
-  GoogleMapController? _controller;
-  final loc_lib.Location _location = loc_lib.Location(); // Use aliased Location
-  LatLng? _currentPosition;
-  final List<LatLng> _routeCoordinates = [];
-  double _distanceTraveled = 0.0;
-  bool _isNearStation = false;
-  final double _stationRadius = 100.0; // Meters
-  bool _isLoadingEndRide = false; // Tracks loading state for ending ride API
-  String? _endRideError; // Stores error message for ending ride API
-
-  // Hardcoded station locations (ideally fetched from API like in MapScreen)
-  final List<LatLng> _stations = [
-    const LatLng(9.0069631, 38.7622717), // Meskel Square
-    const LatLng(9.0016631, 38.723503), // Tor Hayloch
-    const LatLng(8.9812889, 38.7596757), // Saris Abo
-  ];
-
   final RideService _rideService = RideService(); // Instantiate RideService
+
+  String _statusMessage = 'Ride in progress...';
+  bool _isEndingRide = false;
+  String? _rideEndError;
+
+  // Placeholder for map-related state, if you decide to add live tracking later
+  // LatLng _currentLocation = const LatLng(0, 0); // User's live location
+  // bool _isNearStation = false; // Flag to enable 'End Ride' button
+  // loc_lib.Location _location = loc_lib.Location();
+  // StreamSubscription<loc_lib.LocationData>? _locationSubscription;
+
+  // For demonstration, let's make _isNearStation true after a delay
+  // In a real app, this would be based on actual geofencing/proximity logic
+  bool _isNearStationPlaceholder = false;
+  Timer? _enableEndRideTimer;
 
   @override
   void initState() {
     super.initState();
-    print(
-        'RideInProgressScreen: Ride ID: ${widget.rideId}, Bike ID: ${widget.bikeId}');
-    _startTracking();
+    _statusMessage = 'Your ride with bike ${widget.bikeId} has started.';
+
+    // Simulate being near a station to enable the end ride button after a few seconds
+    _enableEndRideTimer = Timer(const Duration(seconds: 10), () {
+      if (mounted) {
+        setState(() {
+          _isNearStationPlaceholder = true;
+          _statusMessage = 'You are near a drop-off station.';
+        });
+      }
+    });
+
+    // If you integrate live location tracking:
+    // _startLocationUpdates();
   }
 
-  // Starts tracking user's location and updates route/distance
-  void _startTracking() {
-    _location.onLocationChanged.listen((loc_lib.LocationData currentLocation) {
-      if (currentLocation.latitude == null ||
-          currentLocation.longitude == null) {
-        return;
-      }
-      LatLng newPosition =
-          LatLng(currentLocation.latitude!, currentLocation.longitude!);
+  @override
+  void dispose() {
+    _enableEndRideTimer?.cancel();
+    // _locationSubscription?.cancel(); // Uncomment if using location updates
+    super.dispose();
+  }
 
-      if (_currentPosition != null) {
-        // Calculate distance between previous and new point
-        double segmentDistance = Geolocator.distanceBetween(
-          _currentPosition!.latitude,
-          _currentPosition!.longitude,
-          newPosition.latitude,
-          newPosition.longitude,
-        );
+  // Example for real-time location updates (uncomment and integrate if needed)
+  /*
+  void _startLocationUpdates() {
+    _locationSubscription = _location.onLocationChanged.listen((loc_lib.LocationData currentLocationData) {
+      if (mounted && currentLocationData.latitude != null && currentLocationData.longitude != null) {
         setState(() {
-          _distanceTraveled += segmentDistance;
-          _routeCoordinates.add(newPosition);
-          _isNearStation = _checkProximityToStations(newPosition);
-        });
-      } else {
-        // Add initial position if it's the first one
-        setState(() {
-          _routeCoordinates.add(newPosition);
+          _currentLocation = LatLng(currentLocationData.latitude!, currentLocationData.longitude!);
+          // TODO: Implement logic to check if _currentLocation is near a valid end station
+          // For now, _isNearStationPlaceholder handles the button activation
+          // _isNearStation = checkProximityToStation(_currentLocation);
         });
       }
-
-      setState(() {
-        _currentPosition = newPosition;
-      });
-
-      _controller?.animateCamera(CameraUpdate.newLatLng(newPosition));
     });
   }
+  */
 
-  // Checks if the current position is near any of the predefined stations
-  bool _checkProximityToStations(LatLng position) {
-    for (var station in _stations) {
-      if (Geolocator.distanceBetween(position.latitude, position.longitude,
-              station.latitude, station.longitude) <=
-          _stationRadius) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // Initiates the end ride process with the backend
   void _endRide() async {
-    // Ensure we have a current position to send as final location
-    if (_currentPosition == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Cannot end ride: Current location not available.")),
-      );
-      return;
-    }
-
-    // Check proximity again just before ending
-    if (!_isNearStation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("You can only end your ride near a station.")),
-      );
-      return;
-    }
-
     setState(() {
-      _isLoadingEndRide = true;
-      _endRideError = null;
+      _isEndingRide = true;
+      _rideEndError = null;
+      _statusMessage = 'Ending ride... Please wait.';
     });
 
     try {
-      final rideEndDetails = await _rideService.endRide(
+      // In a real app, get the actual current location
+      // For now, use a dummy final location
+      // final loc_lib.LocationData finalLocation = await _location.getLocation();
+      // double finalLatitude = finalLocation.latitude ?? 0.0;
+      // double finalLongitude = finalLocation.longitude ?? 0.0;
+      double finalLatitude = 8.883137025013506; // Dummy end location latitude
+      double finalLongitude = 38.80912475266776; // Dummy end location longitude
+
+      final Map<String, dynamic> rideDetails = await _rideService.endRide(
         rideId: widget.rideId,
-        finalLatitude: _currentPosition!.latitude,
-        finalLongitude: _currentPosition!.longitude,
+        finalLatitude: finalLatitude,
+        finalLongitude: finalLongitude,
       );
 
-      setState(() {
-        _isLoadingEndRide = false;
-      });
-
-      // Show payment popup dialog instead of navigating to payment screen
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => PaymentPopup(
-          rideDetails: rideEndDetails,
-          onPaymentSelected: () {
-            // Handle post-payment logic here, e.g., navigate to home or ride summary
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          },
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ride ended successfully!')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentScreen(rideDetails: rideDetails),
+          ),
+        );
+      }
     } catch (e) {
-      setState(() {
-        _endRideError = e.toString().contains('Exception:')
-            ? e.toString().split('Exception: ')[1]
-            : e.toString();
-        _isLoadingEndRide = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to end ride: ${_endRideError!}')),
-      );
+      if (mounted) {
+        setState(() {
+          _rideEndError = e.toString();
+          _statusMessage = 'Error ending ride: $_rideEndError';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to end ride: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isEndingRide = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: CameraPosition(
-              target: _currentPosition ??
-                  _stations[
-                      0], // Use current position or first station as fallback
-              zoom: 15,
-            ),
-            markers: {
-              // Add a marker for the current position
-              if (_currentPosition != null)
-                Marker(
-                  markerId: const MarkerId('currentPosition'),
-                  position: _currentPosition!,
-                  icon: BitmapDescriptor.defaultMarkerWithHue(
-                      BitmapDescriptor.hueAzure),
-                  infoWindow: const InfoWindow(title: 'Your Location'),
-                ),
-              // Markers for all stations (re-added for visibility)
-              ..._stations
-                  .map((station) => Marker(
-                        markerId: MarkerId(station.toString()),
-                        position: station,
-                        icon: BitmapDescriptor.defaultMarkerWithHue(
-                            BitmapDescriptor.hueGreen),
-                        infoWindow: InfoWindow(
-                            title:
-                                'Station ${station.latitude.toStringAsFixed(2)}, ${station.longitude.toStringAsFixed(2)}'),
-                      ))
-                  .toSet(),
-            },
-            polylines: {
-              Polyline(
-                polylineId: const PolylineId("route"),
-                points: _routeCoordinates,
-                color: AppColors.primaryGreen,
-                width: 5,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Ride in Progress"),
+        automaticallyImplyLeading: false, // Hide default back button
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Lottie.asset(
+                "assets/animations/bike_ride.json", // Ensure this Lottie asset exists
+                width: 250,
+                height: 250,
+                fit: BoxFit.contain,
+                repeat: true, // Animation repeats indefinitely during ride
               ),
-            },
-            myLocationEnabled: true, // Show the blue dot on map
-            myLocationButtonEnabled:
-                false, // Hide built-in button, use custom if needed
-            zoomControlsEnabled: false,
-            onMapCreated: (GoogleMapController controller) {
-              _controller = controller;
-              // Animate camera to current position if available on map creation
-              if (_currentPosition != null) {
-                _controller?.animateCamera(
-                    CameraUpdate.newLatLngZoom(_currentPosition!, 15));
-              }
-            },
-          ),
-          Positioned(
-            top: 40,
-            left: 20,
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: const [
-                        BoxShadow(color: Colors.grey, blurRadius: 4)
-                      ]),
-                  child: IconButton(
-                    onPressed: () {
-                      // Logic for exiting ride screen - typically not allowed mid-ride without ending it
-                      // You might show a dialog asking to end ride first
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Please end your ride first.")),
-                      );
-                    },
-                    icon: const Icon(FontAwesomeIcons.arrowLeft),
-                  ),
+              const SizedBox(height: 30),
+              Text(
+                _statusMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
                 ),
-                const SizedBox(
-                  width: 20,
-                ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Bike ID: ${widget.bikeId}",
-                          style: const TextStyle(color: Colors.white)),
-                      Text(
-                          "Distance: ${_distanceTraveled.toStringAsFixed(2)} m",
-                          style: const TextStyle(color: Colors.white)),
-                      Text(
-                          _isNearStation
-                              ? "You can end the ride"
-                              : "Ride must end near a station",
-                          style: const TextStyle(color: Colors.yellow)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 30,
-            left: 20,
-            right: 20,
-            child: ElevatedButton(
-              onPressed: _isNearStation && !_isLoadingEndRide
-                  ? _endRide
-                  : null, // Enable only if near station and not loading
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                backgroundColor: _isNearStation
-                    ? AppColors.secondaryGreen
-                    : Colors.grey, // Grey out if disabled
               ),
-              child: _isLoadingEndRide
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      "End Ride",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
+              const SizedBox(height: 20),
+              if (_isEndingRide)
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                )
+              else if (_rideEndError != null)
+                Column(
+                  children: [
+                    const Icon(Icons.error, color: Colors.red, size: 60),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Error: $_rideEndError',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
                     ),
-            ),
+                  ],
+                )
+              else
+                ElevatedButton(
+                  onPressed: _isNearStationPlaceholder && !_isEndingRide
+                      ? _endRide
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isNearStationPlaceholder
+                        ? Colors.redAccent
+                        : Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    "End Ride",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
           ),
-          // Error display for ending ride
-          if (_endRideError != null)
-            Positioned(
-              top: 120, // Adjust position as needed
-              left: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Error ending ride: $_endRideError',
-                  style: const TextStyle(color: Colors.white),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

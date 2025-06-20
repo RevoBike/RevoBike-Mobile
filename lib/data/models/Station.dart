@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:revobike/data/models/Bike.dart' as bike_model;
+import 'package:revobike/data/models/Bike.dart'
+    as bike_model; // Using alias as per your code
 
 // Represents the nested 'location' object from your backend API response
 class LocationData extends Equatable {
@@ -37,10 +38,9 @@ class Station extends Equatable {
   final String name;
   final LocationData location; // Nested LocationData object
   final int totalSlots;
-  final List<bike_model.BikeModel> availableBikes; // Use bike_model.BikeModel
-  final String? address; // NEW: Added address field from backend response
-  final String
-      status; // Assuming there's a status in your actual response or derived (e.g., 'open', 'closed')
+  final List<bike_model.BikeModel> availableBikes; // Using bike_model.BikeModel
+  final String? address; // NEW: Added address field
+  final String status; // Not nullable in constructor, with default
   final double? rate; // Added rate, made nullable
 
   const Station({
@@ -56,8 +56,10 @@ class Station extends Equatable {
 
   factory Station.fromJson(Map<String, dynamic> json) {
     // Parse the list of bike objects into a List<bike_model.BikeModel>
-    final List<bike_model.BikeModel> bikes = (json['available_bikes'] as List<dynamic>?)
-            ?.map((e) => bike_model.BikeModel.fromJson(e as Map<String, dynamic>))
+    final List<bike_model.BikeModel> bikes = (json['available_bikes']
+                as List<dynamic>?)
+            ?.map(
+                (e) => bike_model.BikeModel.fromJson(e as Map<String, dynamic>))
             .toList() ??
         []; // Handle case where 'available_bikes' might be null or empty
 
@@ -89,8 +91,9 @@ class Station extends Equatable {
           .toList(), // Convert BikeModel list to JSON
       'status': status,
     };
-    if (address != null) data['address'] = address;
-    if (rate != null) data['rate'] = rate;
+    if (address != null)
+      data['address'] = address; // Include address if not null
+    if (rate != null) data['rate'] = rate; // Include rate if not null
     return data;
   }
 
@@ -101,7 +104,7 @@ class Station extends Equatable {
         location,
         totalSlots,
         availableBikes,
-        address,
+        address, // Include address in props
         status,
         rate,
       ];

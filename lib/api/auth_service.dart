@@ -3,13 +3,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:convert';
-import 'package:revobike/data/models/User.dart'; // Ensure this path is correct
-import 'package:revobike/api/api_constants.dart'; // Ensure this path is correct for your project structure
+import 'package:revobike/data/models/User.dart';
+import 'package:revobike/api/api_constants.dart';
 
 class AuthService {
   static const _tokenKey = 'jwt';
-  static const _userProfileKey =
-      'user_profile'; // New key for storing user profile JSON
+  static const _userProfileKey = 'user_profile';
+  static const _onboardingSeenKey =
+      'onboarding_seen'; // NEW: Key for onboarding flag
+
   final FlutterSecureStorage _storage;
   final http.Client client;
 
@@ -19,29 +21,37 @@ class AuthService {
   })  : _storage = storage ?? const FlutterSecureStorage(),
         client = client ?? http.Client();
 
-  // Helper for getting the stored token (remains the same)
   Future<String?> getAuthToken() async {
     final prefs = await _storage.read(key: _tokenKey);
     return prefs;
   }
 
-  // --- Helper to save User Profile to secure storage ---
   Future<void> _saveUserProfile(UserModel user) async {
-    final userJson =
-        jsonEncode(user.toJson()); // Convert UserModel to JSON string
+    final userJson = jsonEncode(user.toJson());
     await _storage.write(key: _userProfileKey, value: userJson);
   }
 
-  // --- Helper to load User Profile from secure storage ---
   Future<UserModel?> _loadUserProfile() async {
     final userJson = await _storage.read(key: _userProfileKey);
     if (userJson != null) {
       return UserModel.fromJson(jsonDecode(userJson));
     }
-    return null; // Return null if no user profile is stored
+    return null;
   }
 
-  // --- Registration Function (remains mostly same, but can store token if API returns it) ---
+  // NEW: Method to set onboarding as seen
+  Future<void> setOnboardingSeen() async {
+    await _storage.write(
+        key: _onboardingSeenKey,
+        value: 'true'); // Store as string as secure_storage only takes strings
+  }
+
+  // NEW: Method to check if onboarding has been seen
+  Future<bool> hasSeenOnboarding() async {
+    final String? seen = await _storage.read(key: _onboardingSeenKey);
+    return seen == 'true';
+  }
+
   Future<Map<String, dynamic>> register(String name, String email,
       String password, String universityId, String phoneNumber) async {
     try {
@@ -63,13 +73,6 @@ class AuthService {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // If your registration API also returns a token AND user data, store it here:
-        // final String? token = responseData['token'];
-        // final Map<String, dynamic>? userData = responseData['user'];
-        // if (token != null && userData != null) {
-        //   await _storage.write(key: _tokenKey, value: token);
-        //   await _saveUserProfile(UserModel.fromJson(userData));
-        // }
         return responseData;
       } else {
         final message = responseData['message'] ?? 'Registration failed';
@@ -81,7 +84,6 @@ class AuthService {
     }
   }
 
-  // --- Send Password Reset Link (remains same) ---
   Future<Map<String, dynamic>> sendPasswordResetLink(String email) async {
     try {
       final url =
@@ -107,7 +109,6 @@ class AuthService {
     }
   }
 
-  // --- Reset Password (remains same) ---
   Future<Map<String, dynamic>> resetPassword(
       String email, String otp, String newPassword) async {
     try {
@@ -138,7 +139,6 @@ class AuthService {
     }
   }
 
-  // --- Login Function (UPDATED to store user profile) ---
   Future<String> login(String email, String password) async {
     try {
       final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.loginEndpoint);
@@ -161,13 +161,14 @@ class AuthService {
         }
         await _storage.write(key: _tokenKey, value: token);
 
-        // Store user profile from login response
         final Map<String, dynamic>? userData = data['user'];
         if (userData != null) {
           await _saveUserProfile(UserModel.fromJson(userData));
         } else {
           print('Warning: No user data found in login response.');
         }
+
+        await setOnboardingSeen(); // NEW: Set onboarding as seen on successful login
 
         return token;
       } else {
@@ -180,13 +181,10 @@ class AuthService {
     }
   }
 
-  // --- Fetch User Profile Function (UPDATED to load from storage) ---
   Future<UserModel?> fetchUserProfile() async {
-    // This method now loads the profile from secure storage, not from an API endpoint
     return await _loadUserProfile();
   }
 
-  // --- Verify OTP (remains same) ---
   Future<bool> verifyOtp(String email, String otp) async {
     try {
       final url =
@@ -207,11 +205,6 @@ class AuthService {
         final token = data['token'];
         if (token != null) {
           await _storage.write(key: _tokenKey, value: token);
-          // If verifyOtp also returns user data, store it:
-          // final Map<String, dynamic>? userData = data['user'];
-          // if (userData != null) {
-          //   await _saveUserProfile(UserModel.fromJson(userData));
-          // }
           return true;
         } else {
           return data['success'] == true;
@@ -226,17 +219,18 @@ class AuthService {
     }
   }
 
-  // --- Logout Function (UPDATED to also clear user profile) ---
   Future<void> logout() async {
     await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _userProfileKey); // Clear stored user profile
+    await _storage.delete(key: _userProfileKey);
+    // Optionally, you might *not* delete _onboardingSeenKey on logout
+    // if you want users who've logged in once to never see onboarding again.
+    // If you want them to potentially see it again (e.g., if you update onboarding),
+    // you could delete it here:
+    // await _storage.delete(key: _onboardingSeenKey);
   }
 
-  // --- Check if user is authenticated (remains same) ---
   Future<bool> get isAuthenticated async {
     final token = await _storage.read(key: _tokenKey);
     return token != null && !JwtDecoder.isExpired(token);
   }
-
-  // --- Delete Account (remains same in functionality, assuming it's an authenticated endpoint) ---
 }

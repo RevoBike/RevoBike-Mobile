@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:revobike/constants/app_colors.dart'; // Assuming you have AppColors defined
-// import 'package:revobike/presentation/screens/auth/LoginScreen.dart'; // No longer navigate directly here
-import 'package:revobike/presentation/screens/auth/AuthChoiceScreen.dart'; // Import the LocationPermissionScreen
+import 'package:revobike/constants/app_colors.dart';
+import 'package:revobike/presentation/screens/auth/AuthChoiceScreen.dart'; // Import AuthChoiceScreen
+import 'package:revobike/api/auth_service.dart'; // Import AuthService
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -13,21 +13,22 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  final AuthService _authService = AuthService(); // Instantiate AuthService
 
   final List<Map<String, String>> onboardingPages = [
     {
-      'image': 'assets/images/stationcharge.jpg', // Placeholder image asset
+      'image': 'assets/images/stationcharge.jpg',
       'title': 'Find Your Perfect Ride',
       'description':
           'Locate nearby e-bike stations and browse available bikes with ease. Your next adventure is just a tap away.',
     },
     {
-      'image': 'assets/images/stationcafe.jpg', // Placeholder image asset
+      'image': 'assets/images/stationcafe.jpg',
       'title': 'Effortless Unlocking',
       'description': 'Hang out at the nearby station, romanticize life.',
     },
     {
-      'image': 'assets/images/stationplants.jpg', // Placeholder image asset
+      'image': 'assets/images/stationplants.jpg',
       'title': 'Sustainable Journeys',
       'description':
           'Join the green movement. Choose electric bikes for eco-friendly commutes and healthy explorations.',
@@ -50,17 +51,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  // --- MODIFIED NAVIGATION FUNCTION ---
-  void _navigateToLocationPermission() {
-    Navigator.of(context).pushReplacement(
-      // Push the LocationPermissionScreen as a full-screen route
-      MaterialPageRoute(builder: (context) => const AuthChoiceScreen()),
-    );
+  // Modified navigation function to also set onboarding as seen
+  void _navigateToAuthChoiceScreen() async {
+    await _authService.setOnboardingSeen(); // Set onboarding as seen
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const AuthChoiceScreen()),
+      );
+    }
   }
-  // --- END MODIFICATION ---
 
   void _onSkipPressed() {
-    _navigateToLocationPermission(); // Now navigates to LocationPermissionScreen
+    _navigateToAuthChoiceScreen(); // Now navigates to AuthChoiceScreen and marks onboarding as seen
   }
 
   void _onNextPressed() {
@@ -70,8 +72,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeIn,
       );
     } else {
-      // Last page, navigate to LocationPermissionScreen
-      _navigateToLocationPermission(); // Now navigates to LocationPermissionScreen
+      // Last page, navigate to AuthChoiceScreen and mark onboarding as seen
+      _navigateToAuthChoiceScreen();
     }
   }
 
@@ -92,8 +94,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Text(
                     'Skip',
                     style: TextStyle(
-                      color: AppColors
-                          .primaryGreen, // Use your app's primary color
+                      color: AppColors.primaryGreen,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -128,8 +129,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       const EdgeInsets.symmetric(horizontal: 4, vertical: 16),
                   decoration: BoxDecoration(
                     color: _currentPage == index
-                        ? AppColors.primaryGreen // Active dot color
-                        : Colors.grey[300], // Inactive dot color
+                        ? AppColors.primaryGreen
+                        : Colors.grey[300],
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -144,8 +145,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _onNextPressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        AppColors.primaryGreen, // Use your app's primary color
+                    backgroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -189,15 +189,15 @@ class _OnboardingPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(
-            flex: 3, // Illustration takes more space
+            flex: 3,
             child: Image.asset(
               imagePath,
-              fit: BoxFit.contain, // Adjust as needed
+              fit: BoxFit.contain,
             ),
           ),
           const SizedBox(height: 30),
           Expanded(
-            flex: 2, // Text content takes less space
+            flex: 2,
             child: Column(
               children: [
                 Text(
@@ -206,7 +206,7 @@ class _OnboardingPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.darkGrey, // Use your app's text color
+                    color: AppColors.darkGrey,
                   ),
                 ),
                 const SizedBox(height: 15),

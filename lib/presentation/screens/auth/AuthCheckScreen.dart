@@ -4,6 +4,7 @@ import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/home/HomeScreen.dart';
+import 'package:revobike/presentation/screens/onBoarding/OnBoardingScreen.dart'; // NEW: Import OnboardingScreen
 import 'package:revobike/constants/app_colors.dart';
 
 class AuthCheckScreen extends StatefulWidget {
@@ -19,38 +20,58 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAuthentication();
+    _checkInitialFlow(); // Changed to _checkInitialFlow
   }
 
-  Future<void> _checkAuthentication() async {
+  Future<void> _checkInitialFlow() async {
+    // 1. Check if onboarding has been seen
+    final bool hasSeenOnboarding = await _authService.hasSeenOnboarding();
+
+    if (!hasSeenOnboarding) {
+      // First-time user, navigate to Onboarding Screen
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        );
+      }
+      return; // Stop further checks
+    }
+
+    // 2. If onboarding has been seen, proceed with authentication check
     bool isAuthenticated = await _authService.isAuthenticated;
 
     if (isAuthenticated) {
-      // Fetch user profile from local storage. It returns UserModel?, so handle null.
       final UserModel? user = await _authService.fetchUserProfile();
 
       if (user != null) {
-        // If user profile is found, proceed to HomeScreen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        // Authenticated and profile found, go to HomeScreen
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        }
       } else {
-        // If authenticated but no local user profile (e.g., corrupted storage), force re-login
+        // Authenticated but no local user profile (corrupted storage?), force re-login
         print(
             'AuthCheckScreen: User authenticated but profile not found locally. Logging out.');
-        await _authService.logout(); // Clear token too
+        await _authService.logout();
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        }
+      }
+    } else {
+      // Not authenticated, navigate to LoginScreen (onboarding already seen)
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       }
-    } else {
-      // Not authenticated, navigate to LoginScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
     }
   }
 

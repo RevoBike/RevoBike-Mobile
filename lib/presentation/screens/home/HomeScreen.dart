@@ -216,7 +216,7 @@ class HomePageScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: AppColors.primaryGreen,
+                backgroundColor: Colors.grey[50],
                 child: currentUser?.name != null && currentUser!.name.isNotEmpty
                     ? Text(
                         currentUser!.name[0].toUpperCase(),

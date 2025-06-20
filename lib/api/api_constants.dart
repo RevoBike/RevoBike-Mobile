@@ -25,4 +25,8 @@ class ApiConstants {
       '/rides/end'; // To end a ride: /rides/end/{rideId}
   static const String rideHistoryEndpoint =
       '/rides/history'; // To get ride history
+  static const String chapaInitializePaymentEndpoint =
+      '/chapa/initialize-payment'; // Your backend endpoint to initialize Chapa
+  static const String chapaVerifyPaymentEndpoint =
+      '/chapa/verify-payment'; // Your backend endpoint to verify Chapa transaction (optional for client-side call)
 }

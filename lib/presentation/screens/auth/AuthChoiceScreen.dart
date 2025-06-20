@@ -57,7 +57,7 @@ class AuthChoiceScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryGreen,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(25),
                     ),
                   ),
                   child: const Text(
@@ -85,7 +85,7 @@ class AuthChoiceScreen extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primaryGreen),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(25),
                     ),
                   ),
                   child: Text(

@@ -53,6 +53,7 @@ dependencies:
   http: ^1.4.0 
   matcher: ^0.12.17
   webview_flutter: ^4.13.0 
+  shared_preferences: ^2.1.1
 
 dev_dependencies:
   flutter_test:

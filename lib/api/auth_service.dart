@@ -5,6 +5,9 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:convert';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/api/api_constants.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService {
   static const _tokenKey = 'jwt';
@@ -12,27 +15,60 @@ class AuthService {
   static const _onboardingSeenKey =
       'onboarding_seen'; // NEW: Key for onboarding flag
 
-  final FlutterSecureStorage _storage;
+  final FlutterSecureStorage _secureStorage;
   final http.Client client;
 
   AuthService({
-    FlutterSecureStorage? storage,
+    FlutterSecureStorage? secureStorage,
     http.Client? client,
-  })  : _storage = storage ?? const FlutterSecureStorage(),
+  })  : _secureStorage = secureStorage ?? const FlutterSecureStorage(),
         client = client ?? http.Client();
 
+  // Helper method to delete keys from storage
+  Future<void> _deleteKey(String key) async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(key);
+    } else {
+      await _secureStorage.delete(key: key);
+    }
+  }
+
+  Future<dynamic> _getStorage() async {
+    if (kIsWeb) {
+      return await SharedPreferences.getInstance();
+    } else {
+      return _secureStorage;
+    }
+  }
+
   Future<String?> getAuthToken() async {
-    final prefs = await _storage.read(key: _tokenKey);
-    return prefs;
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString(_tokenKey);
+    } else {
+      return await _secureStorage.read(key: _tokenKey);
+    }
   }
 
   Future<void> _saveUserProfile(UserModel user) async {
     final userJson = jsonEncode(user.toJson());
-    await _storage.write(key: _userProfileKey, value: userJson);
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_userProfileKey, userJson);
+    } else {
+      await _secureStorage.write(key: _userProfileKey, value: userJson);
+    }
   }
 
   Future<UserModel?> _loadUserProfile() async {
-    final userJson = await _storage.read(key: _userProfileKey);
+    String? userJson;
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      userJson = prefs.getString(_userProfileKey);
+    } else {
+      userJson = await _secureStorage.read(key: _userProfileKey);
+    }
     if (userJson != null) {
       return UserModel.fromJson(jsonDecode(userJson));
     }
@@ -41,14 +77,25 @@ class AuthService {
 
   // NEW: Method to set onboarding as seen
   Future<void> setOnboardingSeen() async {
-    await _storage.write(
-        key: _onboardingSeenKey,
-        value: 'true'); // Store as string as secure_storage only takes strings
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_onboardingSeenKey, 'true');
+    } else {
+      await _secureStorage.write(
+          key: _onboardingSeenKey,
+          value: 'true'); // Store as string as secure_storage only takes strings
+    }
   }
 
   // NEW: Method to check if onboarding has been seen
   Future<bool> hasSeenOnboarding() async {
-    final String? seen = await _storage.read(key: _onboardingSeenKey);
+    String? seen;
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      seen = prefs.getString(_onboardingSeenKey);
+    } else {
+      seen = await _secureStorage.read(key: _onboardingSeenKey);
+    }
     return seen == 'true';
   }
 
@@ -159,7 +206,12 @@ class AuthService {
         if (token == null || token is! String) {
           throw Exception('Invalid or missing token received');
         }
-        await _storage.write(key: _tokenKey, value: token);
+        if (kIsWeb) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_tokenKey, token);
+        } else {
+          await _secureStorage.write(key: _tokenKey, value: token);
+        }
 
         final Map<String, dynamic>? userData = data['user'];
         if (userData != null) {
@@ -204,7 +256,12 @@ class AuthService {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final token = data['token'];
         if (token != null) {
-          await _storage.write(key: _tokenKey, value: token);
+          if (kIsWeb) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(_tokenKey, token);
+          } else {
+            await _secureStorage.write(key: _tokenKey, value: token);
+          }
           return true;
         } else {
           return data['success'] == true;
@@ -220,17 +277,23 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: _tokenKey);
-    await _storage.delete(key: _userProfileKey);
+    await _deleteKey(_tokenKey);
+    await _deleteKey(_userProfileKey);
     // Optionally, you might *not* delete _onboardingSeenKey on logout
     // if you want users who've logged in once to never see onboarding again.
     // If you want them to potentially see it again (e.g., if you update onboarding),
     // you could delete it here:
-    // await _storage.delete(key: _onboardingSeenKey);
+    // await _deleteKey(_onboardingSeenKey);
   }
 
   Future<bool> get isAuthenticated async {
-    final token = await _storage.read(key: _tokenKey);
+    String? token;
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString(_tokenKey);
+    } else {
+      token = await _secureStorage.read(key: _tokenKey);
+    }
     return token != null && !JwtDecoder.isExpired(token);
   }
 }

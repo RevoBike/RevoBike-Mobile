@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:revobike/constants/app_colors.dart';
+import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
 
 class PaymentPopup extends StatelessWidget {
   final Map<String, dynamic> rideDetails;
-  final VoidCallback onPaymentSelected;
+  final VoidCallback onPaymentSelected; // This callback is now less critical for Chapa flow
 
   const PaymentPopup({
     super.key,
@@ -86,42 +87,40 @@ class PaymentPopup extends StatelessWidget {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
+              // We'll make the "Mobile Payment" option trigger Chapa
               ListTile(
-                leading: const Icon(Icons.credit_card),
-                title: const Text("Credit Card"),
+                leading: const Icon(Icons.phone_android),
+                title: const Text("Mobile Payment (Chapa)"),
                 onTap: () {
-                  Navigator.of(context).pop();
-                  onPaymentSelected();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Credit Card payment selected.')),
+                  Navigator.of(context).pop(); // Close the popup
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PaymentScreen(rideDetails: rideDetails),
+                    ),
                   );
-                  // Implement credit card payment logic
                 },
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.phone_android),
-                title: const Text("Mobile Payment"),
+                leading: const Icon(Icons.credit_card),
+                title: const Text("Credit Card (Coming Soon)"),
                 onTap: () {
                   Navigator.of(context).pop();
-                  onPaymentSelected();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mobile payment selected.')),
+                    const SnackBar(content: Text('Credit Card payment coming soon!')),
                   );
-                  // Implement mobile payment logic
                 },
               ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.money),
-                title: const Text("Cash"),
+                title: const Text("Cash (Coming Soon)"),
                 onTap: () {
                   Navigator.of(context).pop();
-                  onPaymentSelected();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Cash payment selected.')),
+                    const SnackBar(content: Text('Cash payment coming soon!')),
                   );
-                  // Implement cash payment logic
                 },
               ),
             ],

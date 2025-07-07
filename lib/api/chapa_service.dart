@@ -1,33 +1,19 @@
 // lib/api/chapa_service.dart
-import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:revobike/api/api_constants.dart'; // Ensure correct path
+import 'dart:convert';
+import 'package:revobike/api/api_constants.dart';
+import 'package:revobike/api/auth_service.dart'; // To get the auth token for authenticated requests
 
 class ChapaService {
-  final FlutterSecureStorage _storage;
-  final http.Client _client;
+  final http.Client client;
+  final AuthService _authService; // Inject AuthService to get token
 
-  ChapaService({
-    FlutterSecureStorage? storage,
-    http.Client? client,
-  })  : _storage = storage ?? const FlutterSecureStorage(),
-        _client = client ?? http.Client();
+  ChapaService({http.Client? client, AuthService? authService})
+      : client = client ?? http.Client(),
+        _authService = authService ?? AuthService(); // Initialize AuthService
 
-  // Helper to get authenticated headers
-  Future<Map<String, String>> _getAuthHeaders() async {
-    final token = await _storage.read(key: 'jwt');
-    if (token == null) {
-      throw Exception('Authentication token not found. User not logged in.');
-    }
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-
-  /// Initiates a Chapa payment through your backend.
-  /// Your backend will call Chapa's API and return the checkout URL.
+  /// Initializes a Chapa payment with your backend.
+  /// Your backend should then call Chapa's initialize endpoint and return a checkout URL.
   Future<String> initializePayment({
     required String amount,
     required String currency,
@@ -35,54 +21,55 @@ class ChapaService {
     required String firstName,
     required String lastName,
     required String txRef,
-    String? callbackUrl, // Chapa callback URL for your backend
-    String?
-        returnUrl, // URL to redirect user to after payment (your Flutter app's deep link or simple success page)
+    required String returnUrl,
+    String? phoneNumber,
     String? description,
+    String? title,
+    String? logo,
   }) async {
-    final url = Uri.parse(
-        '${ApiConstants.baseUrl}${ApiConstants.chapaInitializePaymentEndpoint}');
-    final headers = await _getAuthHeaders();
-
-    final body = jsonEncode({
-      'amount': amount,
-      'currency': currency,
-      'email': email,
-      'first_name': firstName,
-      'last_name': lastName,
-      'tx_ref':
-          txRef, // Unique transaction reference, ideally from your backend
-      'callback_url': callbackUrl ??
-          '${ApiConstants.baseUrl}/chapa-webhook', // Default or your specific backend webhook
-      'return_url': returnUrl ??
-          'revobike://payment-success', // Your app's deep link or success URL
-      'description': description ?? 'RevoBike Ride Payment',
-    });
-
     try {
-      final response = await _client.post(
-        url,
-        headers: headers,
-        body: body,
-      );
+      final token = await _authService.getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not found. User not logged in.');
+      }
 
-      print(
-          'Chapa Initialize response: ${response.statusCode} - ${response.body}');
+      final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.chapaInitializePaymentEndpoint);
+      final response = await client.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Include auth token
+        },
+        body: jsonEncode({
+          'amount': amount,
+          'currency': currency,
+          'email': email,
+          'first_name': firstName,
+          'last_name': lastName,
+          'tx_ref': txRef,
+          'return_url': returnUrl, // This URL is crucial for Chapa's redirect
+          'phone_number': phoneNumber,
+          'description': description,
+          'title': title,
+          'logo': logo,
+        }),
+      );
 
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseData['status'] == 'success' &&
-            responseData['data'] != null &&
-            responseData['data']['checkout_url'] != null) {
-          return responseData['data']['checkout_url'] as String;
+        if (responseData['status'] == 'success' && responseData['data'] != null) {
+          final String checkoutUrl = responseData['data']['checkout_url'];
+          if (checkoutUrl.isNotEmpty) {
+            return checkoutUrl;
+          } else {
+            throw Exception('Checkout URL not found in response.');
+          }
         } else {
-          throw Exception(
-              responseData['message'] ?? 'Failed to get Chapa checkout URL.');
+          throw Exception(responseData['message'] ?? 'Failed to initialize payment.');
         }
       } else {
-        throw Exception(responseData['message'] ??
-            'Backend failed to initialize Chapa payment.');
+        throw Exception(responseData['message'] ?? 'Backend error initializing payment: ${response.statusCode}');
       }
     } catch (e) {
       print('Error initializing Chapa payment: $e');
@@ -90,28 +77,34 @@ class ChapaService {
     }
   }
 
-  /// (Optional) Verifies a Chapa transaction status via your backend.
-  /// This is often handled entirely by your backend via webhooks.
+  /// Verifies the Chapa payment status with your backend.
+  /// Your backend should then call Chapa's verify endpoint and return the status.
   Future<Map<String, dynamic>> verifyPayment(String txRef) async {
-    final url = Uri.parse(
-        '${ApiConstants.baseUrl}${ApiConstants.chapaVerifyPaymentEndpoint}/$txRef');
-    final headers = await _getAuthHeaders();
-
     try {
-      final response = await _client.get(
-        url,
-        headers: headers,
-      );
+      final token = await _authService.getAuthToken();
+      if (token == null) {
+        throw Exception('Authentication token not found. User not logged in.');
+      }
 
-      print('Chapa Verify response: ${response.statusCode} - ${response.body}');
+      final url = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.chapaVerifyPaymentEndpoint}/$txRef');
+      final response = await client.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Include auth token
+        },
+      );
 
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        return responseData; // Contains payment status
+        if (responseData['status'] == 'success') {
+          return {'status': 'success', 'data': responseData['data']};
+        } else {
+          return {'status': 'failed', 'message': responseData['message']};
+        }
       } else {
-        throw Exception(responseData['message'] ??
-            'Failed to verify payment with backend.');
+        throw Exception(responseData['message'] ?? 'Backend error verifying payment: ${response.statusCode}');
       }
     } catch (e) {
       print('Error verifying Chapa payment: $e');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:revobike/constants/app_colors.dart';
 import 'package:revobike/api/ride_service.dart'; // Import your RideService
+import 'package:revobike/api/auth_service.dart'; // Import your AuthService
 
 // If your Ride and Location models are in separate files like data/models/ride.dart
 // and data/models/location.dart, uncomment/add these imports:
@@ -16,13 +17,15 @@ class RecentTripsScreen extends StatefulWidget {
 }
 
 class _RecentTripsScreenState extends State<RecentTripsScreen> {
-  final RideService _rideService = RideService(); // Instantiate RideService
+  final AuthService _authService = AuthService();
+  late final RideService _rideService;
 
   late Future<List<Ride>> _rideHistoryFuture; // Future to hold API response
 
   @override
   void initState() {
     super.initState();
+    _rideService = RideService(authService: _authService);
     _rideHistoryFuture = _fetchRideHistory(); // Start fetching data
   }
 

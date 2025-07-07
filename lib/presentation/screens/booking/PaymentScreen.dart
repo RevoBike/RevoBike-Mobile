@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart'; // Import webview_flutter
-import 'package:uuid/uuid.dart'; // To generate a unique transaction reference (for testing)
-import 'package:revobike/api/chapa_service.dart'; // Import your ChapaService
-import 'package:revobike/api/auth_service.dart'; // To get user email for Chapa
-import 'package:revobike/data/models/User.dart'; // To get user profile for Chapa
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:uuid/uuid.dart';
+import 'package:revobike/api/chapa_service.dart';
+import 'package:revobike/api/auth_service.dart';
+import 'package:revobike/data/models/User.dart';
+import 'package:revobike/presentation/screens/booking/paymentFeedbackScreen.dart'; // NEW: Import feedback screen
 
 class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic> rideDetails;
@@ -18,16 +19,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _isLoadingPayment = false;
   String? _paymentErrorMessage;
   final ChapaService _chapaService = ChapaService();
-  final AuthService _authService = AuthService(); // To fetch user info
-
-  // Controller for the WebView
-  late final WebViewController _webViewController;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-    // Initialize WebView controller if it's needed for the whole screen
-    // For Chapa, we often create it dynamically when needed.
+    // No need to initialize WebViewController here, it's done in _ChapaWebViewScreen
   }
 
   // Chapa payment initiation logic
@@ -64,8 +61,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // The returnUrl is where Chapa redirects the user's browser AFTER payment.
         // This should point back to your Flutter app, possibly via a deep link.
         // For testing, you might use a simple success/failure URL on your backend.
-        returnUrl:
-            'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef', // Example: your backend's success/failure page
+        // IMPORTANT: Ensure this matches your backend's redirect URL exactly.
+        returnUrl: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef',
       );
 
       // Launch the Chapa checkout URL in a WebView
@@ -76,21 +73,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
             txRef: txRef,
             onPaymentComplete: (bool success) {
               if (mounted) {
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Payment successful!')),
-                  );
-                  Navigator.of(context)
-                      .popUntil((route) => route.isFirst); // Go to Home
-                } else {
-                  setState(() {
-                    _paymentErrorMessage = 'Payment canceled or failed.';
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Payment canceled or failed.')),
-                  );
-                }
+                // After payment is complete (or cancelled), navigate to feedback screen
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentFeedbackScreen(
+                      isSuccess: success,
+                      rideDetails: widget.rideDetails, // Pass ride details to feedback screen
+                    ),
+                  ),
+                );
               }
             },
             chapaService: _chapaService, // Pass ChapaService for verification
@@ -248,7 +240,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 }
 
-// NEW: A dedicated WebView screen for Chapa checkout
+// A dedicated WebView screen for Chapa checkout
 class _ChapaWebViewScreen extends StatefulWidget {
   final String checkoutUrl;
   final String txRef;
@@ -270,7 +262,7 @@ class _ChapaWebViewScreen extends StatefulWidget {
 class _ChapaWebViewScreenState extends State<_ChapaWebViewScreen> {
   late final WebViewController _controller;
   bool _isLoadingWebView = true;
-  bool _paymentSuccessHandled = false;
+  bool _paymentHandled = false; // Changed from _paymentSuccessHandled
 
   @override
   void initState() {
@@ -311,9 +303,9 @@ Page resource error:
   errorType: ${error.errorType}
   isForMainFrame: ${error.isForMainFrame}
           ''');
-            if (mounted) {
-              // Optionally pop with false for error
-              Navigator.of(context).pop(false);
+            if (mounted && !_paymentHandled) { // Ensure not already handled
+              _paymentHandled = true;
+              Navigator.of(context).pop(); // Pop the WebView
               widget.onPaymentComplete(false); // Notify failure
             }
           },
@@ -328,7 +320,8 @@ Page resource error:
             // IMPORTANT: Adjust this URL to match your return_url EXACTLY
             // from the initializePayment call.
             // For this example, we used: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef'
-            if (request.url.contains('payment-status') &&
+            // Ensure the domain and path are correct.
+            if (request.url.contains('revobike-web-3.onrender.com/payment-status') &&
                 request.url.contains('tx_ref=${widget.txRef}')) {
               // This is a potential callback URL. Now verify the payment with your backend.
               _verifyPaymentStatus(request.url);
@@ -336,17 +329,17 @@ Page resource error:
                   .prevent; // Prevent WebView from loading this URL further
             }
 
-            // You might also look for "success", "failure", "cancelled" in the URL
-            if (request.url.contains('success=true') &&
-                !_paymentSuccessHandled) {
-              _paymentSuccessHandled = true; // Prevent double handling
+            // Fallback: You might also look for "success", "failure", "cancelled" in the URL
+            // This is less reliable than verifying with your backend, but can be a quick indicator.
+            if (request.url.contains('success=true') && !_paymentHandled) {
+              _paymentHandled = true; // Prevent double handling
               widget.onPaymentComplete(true);
               Navigator.of(context).pop();
               return NavigationDecision.prevent;
             } else if ((request.url.contains('status=failed') ||
                     request.url.contains('status=cancelled')) &&
-                !_paymentSuccessHandled) {
-              _paymentSuccessHandled = true; // Prevent double handling
+                !_paymentHandled) {
+              _paymentHandled = true; // Prevent double handling
               widget.onPaymentComplete(false);
               Navigator.of(context).pop();
               return NavigationDecision.prevent;
@@ -361,7 +354,7 @@ Page resource error:
 
   // Function to verify payment status with your backend after Chapa redirects
   void _verifyPaymentStatus(String redirectUrl) async {
-    if (_paymentSuccessHandled) return; // Prevent double handling
+    if (_paymentHandled) return; // Prevent double handling
 
     setState(() {
       _isLoadingWebView = true; // Show loading while verifying
@@ -375,10 +368,10 @@ Page resource error:
 
       if (mounted) {
         if (verificationResult['status'] == 'success') {
-          _paymentSuccessHandled = true;
+          _paymentHandled = true;
           widget.onPaymentComplete(true);
         } else {
-          _paymentSuccessHandled = true;
+          _paymentHandled = true;
           widget.onPaymentComplete(false);
         }
         Navigator.of(context).pop(); // Close WebView
@@ -386,7 +379,7 @@ Page resource error:
     } catch (e) {
       if (mounted) {
         print('Payment verification error: $e');
-        _paymentSuccessHandled = true;
+        _paymentHandled = true;
         widget.onPaymentComplete(false);
         Navigator.of(context).pop(); // Close WebView even on error
       }
@@ -408,7 +401,8 @@ Page resource error:
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
-            if (mounted) {
+            if (mounted && !_paymentHandled) { // Only allow closing if not already handled
+              _paymentHandled = true; // Mark as handled (cancelled)
               widget.onPaymentComplete(false); // Consider this a cancellation
               Navigator.of(context).pop();
             }

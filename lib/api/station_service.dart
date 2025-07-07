@@ -1,19 +1,15 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:revobike/data/models/Station.dart'; // Ensure this path is correct
 import 'package:revobike/api/api_constants.dart'; // Import ApiConstants
+import 'package:revobike/api/auth_service.dart'; // Import AuthService
 
 class StationService {
-  final FlutterSecureStorage _storage;
-  // Removed 'baseUrl' as a constructor parameter, use ApiConstants.baseUrl directly
   final http.Client client;
 
   StationService({
-    FlutterSecureStorage? storage,
     http.Client? client,
-  })  : _storage = storage ?? const FlutterSecureStorage(),
-        client = client ?? http.Client();
+  }) : client = client ?? http.Client();
 
   Future<List<Station>> getStations() async {
     try {
@@ -22,7 +18,7 @@ class StationService {
       final url =
           Uri.parse(ApiConstants.baseUrl + ApiConstants.stationsEndpoint);
 
-      final token = await _storage.read(key: 'jwt');
+      final token = await AuthService().getAuthToken();
       final headers = {'Content-Type': 'application/json'};
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';
@@ -55,7 +51,7 @@ class StationService {
           ApiConstants.stationDetailsEndpoint +
           stationId);
 
-      final token = await _storage.read(key: 'jwt');
+      final token = await AuthService().getAuthToken();
       final headers = {'Content-Type': 'application/json'};
       if (token != null) {
         headers['Authorization'] = 'Bearer $token';

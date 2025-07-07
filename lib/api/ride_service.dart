@@ -6,25 +6,33 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:revobike/api/api_constants.dart'; // Ensure this path is correct
+import 'package:revobike/api/auth_service.dart';
 
 class RideService {
   final FlutterSecureStorage _storage;
   final http.Client _client;
+  final AuthService? _authService;
 
   // Constructor for RideService
-  // It takes optional storage and client instances for dependency injection and testing.
+  // It takes optional storage, client, and authService instances for dependency injection and testing.
   RideService({
     FlutterSecureStorage? storage,
     http.Client? client,
+    AuthService? authService,
   })  : _storage = storage ??
             const FlutterSecureStorage(), // Use provided storage or default
-        _client = client ?? http.Client(); // Use provided client or default
+        _client = client ?? http.Client(), // Use provided client or default
+        _authService = authService;
 
-  // Helper method to retrieve the JWT token from secure storage
+  // Helper method to retrieve the JWT token from AuthService or secure storage
   // and format it into the Authorization header.
   Future<Map<String, String>> _getAuthHeaders() async {
-    final token =
-        await _storage.read(key: 'jwt'); // Read JWT token from storage
+    String? token;
+    if (_authService != null) {
+      token = await _authService!.getAuthToken();
+    } else {
+      token = await _storage.read(key: 'jwt'); // Read JWT token from storage
+    }
     if (token == null) {
       // If no token is found, throw an exception indicating the user is not logged in.
       throw Exception('Authentication token not found. User not logged in.');

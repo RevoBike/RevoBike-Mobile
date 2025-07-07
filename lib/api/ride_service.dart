@@ -222,6 +222,12 @@ class RideService {
               responseData['rides'] is List) {
             // Check for a 'rides' key
             return List<Map<String, dynamic>>.from(responseData['rides']);
+          } else if (responseData.length == 1) {
+            // If the map has only one key and its value is a list, return that list
+            final firstValue = responseData.values.first;
+            if (firstValue is List) {
+              return List<Map<String, dynamic>>.from(firstValue);
+            }
           }
           // If it's a map but doesn't contain a known list key ('data' or 'rides')
           throw Exception(

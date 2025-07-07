@@ -101,9 +101,13 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
         ? 'Lat: ${ride.startLocation!.lat.toStringAsFixed(4)}, Lng: ${ride.startLocation!.lng.toStringAsFixed(4)}'
         : 'Unknown location';
     final statusText = isActive ? 'In Progress' : 'Completed';
-    // duration and fare are not in the provided API response, so they remain empty
-    final durationText = '';
-    final fareText = '';
+
+    final durationText = ''; // Could be calculated from startTime and endTime if needed
+    final fareText = (ride.cost != null) ? '\$${ride.cost!.toStringAsFixed(2)}' : '';
+    final distanceText = (ride.distance != null) ? '${ride.distance!.toStringAsFixed(2)} km' : '';
+    final paymentStatusText = ride.paymentStatus.isNotEmpty ? 'Payment: ${ride.paymentStatus}' : '';
+    final startTimeText = ride.startTime != null ? 'Start: ${ride.startTime!.toLocal().toString().split(".")[0]}' : '';
+    final endTimeText = ride.endTime != null ? 'End: ${ride.endTime!.toLocal().toString().split(".")[0]}' : '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -115,51 +119,55 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
           ]),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // FIX: Wrapped Column with Expanded to resolve ParentDataWidget error
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(locationText,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(locationText,
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(statusText,
-                      style: TextStyle(
-                          fontSize: 14,
-                          color:
-                              isActive ? Colors.red : AppColors.primaryGreen)),
-                  // Only show duration/fare if they are not empty (i.e., if your API provides them later)
-                  if (durationText.isNotEmpty || fareText.isNotEmpty)
-                    Text("$durationText - $fareText",
-                        style: const TextStyle(
-                            fontSize: 14, color: Colors.black54)),
-                ],
-              ),
+                ),
+                isActive
+                    ? ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        onPressed: () {
+                          // TODO: Implement finish ride functionality for this specific ride (using ride.id)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Finish ride for ID: ${ride.id}')),
+                          );
+                        },
+                        child: const Text("Finish Ride"),
+                      )
+                    : const Icon(FontAwesomeIcons.circleCheck,
+                        color: Colors.green, size: 24),
+              ],
             ),
-            // The action button/icon based on ride status
-            isActive
-                ? ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    onPressed: () {
-                      // TODO: Implement finish ride functionality for this specific ride (using ride.id)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('Finish ride for ID: ${ride.id}')),
-                      );
-                    },
-                    child: const Text("Finish Ride"),
-                  )
-                : const Icon(FontAwesomeIcons.circleCheck,
-                    color: Colors.green, size: 24),
+            const SizedBox(height: 4),
+            Text(statusText,
+                style: TextStyle(
+                    fontSize: 14,
+                    color: isActive ? Colors.red : AppColors.primaryGreen)),
+            if (durationText.isNotEmpty || fareText.isNotEmpty || distanceText.isNotEmpty)
+              Text("$durationText $fareText $distanceText",
+                  style: const TextStyle(fontSize: 14, color: Colors.black54)),
+            if (paymentStatusText.isNotEmpty)
+              Text(paymentStatusText,
+                  style: const TextStyle(fontSize: 14, color: Colors.black54)),
+            if (startTimeText.isNotEmpty)
+              Text(startTimeText,
+                  style: const TextStyle(fontSize: 14, color: Colors.black54)),
+            if (endTimeText.isNotEmpty)
+              Text(endTimeText,
+                  style: const TextStyle(fontSize: 14, color: Colors.black54)),
           ],
         ),
       ),
@@ -173,26 +181,76 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
 class Ride {
   final String id;
   final String user;
-  final String bike;
+  final Bike bike;
   final Location? startLocation; // Nullable if not always present
+  final Location? endLocation;
+  final double? distance;
+  final double? cost;
   final String status;
+  final String paymentStatus;
+  final DateTime? startTime;
+  final DateTime? endTime;
 
   Ride({
     required this.id,
     required this.user,
     required this.bike,
     this.startLocation,
+    this.endLocation,
+    this.distance,
+    this.cost,
     required this.status,
+    required this.paymentStatus,
+    this.startTime,
+    this.endTime,
   });
 
   factory Ride.fromJson(Map<String, dynamic> json) {
+    Location? parseGeoJsonPoint(Map<String, dynamic>? point) {
+      if (point == null) return null;
+      if (point['type'] == 'Point' && point['coordinates'] is List) {
+        final coords = point['coordinates'] as List;
+        if (coords.length >= 2) {
+          // GeoJSON coordinates are [lng, lat]
+          final lng = (coords[0] as num).toDouble();
+          final lat = (coords[1] as num).toDouble();
+          return Location(lat: lat, lng: lng);
+        }
+      }
+      return null;
+    }
+
     return Ride(
-      id: json['id'] as String,
+      id: json['_id'] as String,
       user: json['user'] as String,
-      bike: json['bike'] as String,
-      startLocation: json['startLocation'] != null
-          ? Location.fromJson(json['startLocation'])
-          : null,
+      bike: Bike.fromJson(json['bike'] as Map<String, dynamic>),
+      startLocation: parseGeoJsonPoint(json['startLocation'] as Map<String, dynamic>?),
+      endLocation: parseGeoJsonPoint(json['endLocation'] as Map<String, dynamic>?),
+      distance: (json['distance'] != null) ? (json['distance'] as num).toDouble() : null,
+      cost: (json['cost'] != null) ? (json['cost'] as num).toDouble() : null,
+      status: json['status'] as String,
+      paymentStatus: json['paymentStatus'] as String? ?? '',
+      startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : null,
+      endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
+    );
+  }
+}
+
+class Bike {
+  final String id;
+  final String bikeId;
+  final String status;
+
+  Bike({
+    required this.id,
+    required this.bikeId,
+    required this.status,
+  });
+
+  factory Bike.fromJson(Map<String, dynamic> json) {
+    return Bike(
+      id: json['_id'] as String,
+      bikeId: json['bikeId'] as String,
       status: json['status'] as String,
     );
   }

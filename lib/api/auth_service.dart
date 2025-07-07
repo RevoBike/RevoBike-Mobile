@@ -12,8 +12,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 class AuthService {
   static const _tokenKey = 'jwt';
   static const _userProfileKey = 'user_profile';
-  static const _onboardingSeenKey =
-      'onboarding_seen'; // NEW: Key for onboarding flag
+  static const _onboardingSeenKey = 'onboarding_seen';
 
   final FlutterSecureStorage _secureStorage;
   final http.Client client;
@@ -26,6 +25,13 @@ class AuthService {
 
   // Helper method to delete keys from storage
   Future<void> _deleteKey(String key) async {
+    // For _onboardingSeenKey, always use SharedPreferences for deletion
+    if (key == _onboardingSeenKey) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(key);
+      return;
+    }
+
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(key);
@@ -34,21 +40,15 @@ class AuthService {
     }
   }
 
-  Future<dynamic> _getStorage() async {
-    if (kIsWeb) {
-      return await SharedPreferences.getInstance();
-    } else {
-      return _secureStorage;
-    }
-  }
-
   Future<String?> getAuthToken() async {
+    String? token;
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_tokenKey);
+      token = prefs.getString(_tokenKey);
     } else {
-      return await _secureStorage.read(key: _tokenKey);
+      token = await _secureStorage.read(key: _tokenKey);
     }
+    return token;
   }
 
   Future<void> _saveUserProfile(UserModel user) async {
@@ -75,27 +75,16 @@ class AuthService {
     return null;
   }
 
-  // NEW: Method to set onboarding as seen
+  // Method to set onboarding as seen - ALWAYS uses SharedPreferences
   Future<void> setOnboardingSeen() async {
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_onboardingSeenKey, 'true');
-    } else {
-      await _secureStorage.write(
-          key: _onboardingSeenKey,
-          value: 'true'); // Store as string as secure_storage only takes strings
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_onboardingSeenKey, 'true');
   }
 
-  // NEW: Method to check if onboarding has been seen
+  // Method to check if onboarding has been seen - ALWAYS uses SharedPreferences
   Future<bool> hasSeenOnboarding() async {
-    String? seen;
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      seen = prefs.getString(_onboardingSeenKey);
-    } else {
-      seen = await _secureStorage.read(key: _onboardingSeenKey);
-    }
+    final prefs = await SharedPreferences.getInstance();
+    String? seen = prefs.getString(_onboardingSeenKey);
     return seen == 'true';
   }
 
@@ -116,7 +105,6 @@ class AuthService {
         }),
       );
 
-      print('Backend response: ${response.body}');
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -126,7 +114,7 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error registering user: $e');
+      print('Error registering user: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -141,7 +129,6 @@ class AuthService {
         body: jsonEncode({'email': email}),
       );
 
-      print('Backend response: ${response.body}');
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -151,7 +138,7 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error sending password reset link: $e');
+      print('Error sending password reset link: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -171,7 +158,6 @@ class AuthService {
         }),
       );
 
-      print('Backend response: ${response.body}');
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -181,7 +167,7 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error resetting password: $e');
+      print('Error resetting password: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -198,7 +184,6 @@ class AuthService {
         }),
       );
 
-      print('Backend response: ${response.body}');
       final data = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -216,19 +201,15 @@ class AuthService {
         final Map<String, dynamic>? userData = data['user'];
         if (userData != null) {
           await _saveUserProfile(UserModel.fromJson(userData));
-        } else {
-          print('Warning: No user data found in login response.');
         }
-
-        await setOnboardingSeen(); // NEW: Set onboarding as seen on successful login
-
+        await setOnboardingSeen(); // Set onboarding as seen on successful login
         return token;
       } else {
         final message = data['message'] ?? 'Login failed';
         throw Exception(message);
       }
     } catch (e) {
-      print('Error logging in: $e');
+      print('Error logging in: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -250,7 +231,6 @@ class AuthService {
         }),
       );
 
-      print('Backend response: ${response.body}');
       final data = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -271,7 +251,7 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error verifying OTP: $e');
+      print('Error verifying OTP: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -279,21 +259,15 @@ class AuthService {
   Future<void> logout() async {
     await _deleteKey(_tokenKey);
     await _deleteKey(_userProfileKey);
-    // Optionally, you might *not* delete _onboardingSeenKey on logout
-    // if you want users who've logged in once to never see onboarding again.
-    // If you want them to potentially see it again (e.g., if you update onboarding),
-    // you could delete it here:
-    // await _deleteKey(_onboardingSeenKey);
+    await _deleteKey(_onboardingSeenKey); // Ensure onboarding is reset on logout for testing
   }
 
   Future<bool> get isAuthenticated async {
-    String? token;
-    if (kIsWeb) {
-      final prefs = await SharedPreferences.getInstance();
-      token = prefs.getString(_tokenKey);
-    } else {
-      token = await _secureStorage.read(key: _tokenKey);
+    String? token = await getAuthToken();
+    if (token == null) {
+      return false;
     }
-    return token != null && !JwtDecoder.isExpired(token);
+    bool expired = JwtDecoder.isExpired(token);
+    return !expired;
   }
 }

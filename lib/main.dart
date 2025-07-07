@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:revobike/presentation/screens/auth/AuthCheckScreen.dart'; // Use AuthCheckScreen as home
+import 'package:revobike/presentation/screens/auth/AuthCheckScreen.dart';
 import 'package:revobike/constants/app_colors.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 
-void main() {
+void main() async { // Make main an async function
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
+  await SharedPreferences.getInstance(); // Initialize SharedPreferences early
   runApp(const MyApp());
 }
 
@@ -20,7 +23,7 @@ class MyApp extends StatelessWidget {
         textTheme: GoogleFonts.rubikTextTheme(),
       ),
       debugShowCheckedModeBanner: false,
-      home: const AuthCheckScreen(), // Changed from SplashScreen to AuthCheckScreen
+      home: const AuthCheckScreen(),
     );
   }
 }

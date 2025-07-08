@@ -5,6 +5,7 @@ import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import the RideService
 import 'dart:async';
+import 'package:revobike/api/auth_service.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Station station;
@@ -22,7 +23,8 @@ class BookingConfirmationScreen extends StatefulWidget {
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
-  final RideService _rideService = RideService(); // Reintroduced RideService
+  final RideService _rideService = RideService(
+      authService: AuthService()); // Pass singleton AuthService instance
 
   String? _rideId;
   bool _isLoadingRideStart = false;
@@ -58,7 +60,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
       if (mounted) {
         setState(() {
-          _rideId = rideResponse['id'] as String; // Assuming your backend returns 'id' for the new ride
+          _rideId = rideResponse['id']
+              as String; // Assuming your backend returns 'id' for the new ride
           _isLoadingRideStart = false;
         });
       }
@@ -161,16 +164,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       : _rideStartError != null
                           ? Column(
                               children: [
-                                const Icon(Icons.error, color: Colors.red, size: 60),
+                                const Icon(Icons.error,
+                                    color: Colors.red, size: 60),
                                 const SizedBox(height: 15),
                                 Text(
                                   'Ride Start Error: ${_rideStartError!}',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 16, color: Colors.red),
+                                  style: const TextStyle(
+                                      fontSize: 16, color: Colors.red),
                                 ),
                                 const SizedBox(height: 15),
                                 ElevatedButton(
-                                  onPressed: _startRideApiCall, // Allow retry for API call
+                                  onPressed:
+                                      _startRideApiCall, // Allow retry for API call
                                   child: const Text('Retry Ride Start'),
                                 ),
                               ],
@@ -184,17 +190,22 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     style: const TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold)),
-                                Text(widget.station.address ?? widget.station.name,
+                                Text(
+                                    widget.station.address ??
+                                        widget.station.name,
                                     style: TextStyle(
-                                        fontSize: 16, color: Colors.grey.shade600)),
+                                        fontSize: 16,
+                                        color: Colors.grey.shade600)),
                                 const Divider(
                                     height: 30,
                                     thickness: 1,
                                     color: Colors.blueAccent),
                                 Text("Bike ID: ${widget.selectedBikeId}",
                                     style: const TextStyle(
-                                        fontSize: 18, fontWeight: FontWeight.bold)),
-                                Text("Pricing Rate: Br.${widget.station.rate?.toStringAsFixed(2) ?? 'N/A'} per km",
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                Text(
+                                    "Pricing Rate: Br.${widget.station.rate?.toStringAsFixed(2) ?? 'N/A'} per km",
                                     style: const TextStyle(fontSize: 16)),
                                 const SizedBox(height: 20),
                                 Container(
@@ -237,11 +248,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   Expanded(
                     child: ElevatedButton(
                       // Enable button only if not loading, no error, and _rideId is set by API
-                      onPressed: _isLoadingRideStart || _rideStartError != null || _rideId == null
+                      onPressed: _isLoadingRideStart ||
+                              _rideStartError != null ||
+                              _rideId == null
                           ? null
                           : _navigateToRideInProgress,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _isLoadingRideStart || _rideStartError != null || _rideId == null
+                        backgroundColor: _isLoadingRideStart ||
+                                _rideStartError != null ||
+                                _rideId == null
                             ? Colors.grey
                             : Colors.blue,
                         foregroundColor: Colors.white,

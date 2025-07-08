@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:revobike/presentation/screens/booking/PaymentScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import RideService
 import 'dart:async'; // For Timer and Future.delayed if needed for UI, but main logic is API
+import 'package:revobike/api/auth_service.dart';
 // import 'package:google_maps_flutter/google_maps_flutter.dart'; // Uncomment if adding map
 // import 'package:location/location.dart' as loc_lib; // Uncomment if adding map
 
@@ -22,7 +23,8 @@ class RideInProgressScreen extends StatefulWidget {
 }
 
 class _RideInProgressScreenState extends State<RideInProgressScreen> {
-  final RideService _rideService = RideService(); // Instantiate RideService
+  final RideService _rideService = RideService(
+      authService: AuthService()); // Pass singleton AuthService instance
 
   String _statusMessage = 'Ride in progress...';
   bool _isEndingRide = false;

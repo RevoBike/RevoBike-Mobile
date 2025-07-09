@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:revobike/constants/app_colors.dart';
+import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:revobike/constants/app_colors.dart';
 import 'package:revobike/api/ride_service.dart'; // Import your RideService
 import 'package:revobike/api/auth_service.dart'; // Import your AuthService
+import 'package:geolocator/geolocator.dart'; // Import geolocator for location
+import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
 
 // If your Ride and Location models are in separate files like data/models/ride.dart
 // and data/models/location.dart, uncomment/add these imports:
@@ -40,6 +45,36 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
       // Re-throw the exception to be caught by the FutureBuilder's error snapshot
       throw Exception('Failed to load ride history: $e');
     }
+  }
+
+  // Method to get current location using geolocator
+  Future<Position> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled.');
+    }
+
+    // Check location permission status
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // Get the current position
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
   }
 
   @override
@@ -96,18 +131,29 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
   // Updated _rideCard to accept a Ride object
   Widget _rideCard(Ride ride) {
     final isActive = ride.status.toLowerCase() == 'active';
+    final isPaymentComplete = ride.paymentStatus.toLowerCase() == 'complete';
+
     // Use the actual startLocation from the ride object
     final locationText = ride.startLocation != null
         ? 'Lat: ${ride.startLocation!.lat.toStringAsFixed(4)}, Lng: ${ride.startLocation!.lng.toStringAsFixed(4)}'
         : 'Unknown location';
     final statusText = isActive ? 'In Progress' : 'Completed';
 
-    final durationText = ''; // Could be calculated from startTime and endTime if needed
-    final fareText = (ride.cost != null) ? '\$${ride.cost!.toStringAsFixed(2)}' : '';
-    final distanceText = (ride.distance != null) ? '${ride.distance!.toStringAsFixed(2)} km' : '';
-    final paymentStatusText = ride.paymentStatus.isNotEmpty ? 'Payment: ${ride.paymentStatus}' : '';
-    final startTimeText = ride.startTime != null ? 'Start: ${ride.startTime!.toLocal().toString().split(".")[0]}' : '';
-    final endTimeText = ride.endTime != null ? 'End: ${ride.endTime!.toLocal().toString().split(".")[0]}' : '';
+    final durationText =
+        ''; // Could be calculated from startTime and endTime if needed
+    final fareText =
+        (ride.cost != null) ? '\$${ride.cost!.toStringAsFixed(2)}' : '';
+    final distanceText = (ride.distance != null)
+        ? '${ride.distance!.toStringAsFixed(2)} km'
+        : '';
+    final paymentStatusText =
+        ride.paymentStatus.isNotEmpty ? 'Payment: ${ride.paymentStatus}' : '';
+    final startTimeText = ride.startTime != null
+        ? 'Start: ${ride.startTime!.toLocal().toString().split(".")[0]}'
+        : '';
+    final endTimeText = ride.endTime != null
+        ? 'End: ${ride.endTime!.toLocal().toString().split(".")[0]}'
+        : '';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -130,25 +176,96 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-                isActive
-                    ? ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8)),
+                if (isActive)
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () async {
+                      try {
+                        final position = await _getCurrentLocation();
+                        final endedRide = await _rideService.endRide(
+                          rideId: ride.id,
+                          finalLatitude: position.latitude,
+                          finalLongitude: position.longitude,
+                        );
+                        // Navigate to PaymentScreen with endedRide details
+                        if (!mounted) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentScreen(
+                              rideDetails: endedRide,
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error ending ride: $e')),
+                        );
+                      }
+                    },
+                    child: const Text("End Ride"),
+                  )
+                else if (!isPaymentComplete)
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () {
+                      // Navigate to PaymentScreen with current ride details
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PaymentScreen(
+                            rideDetails: {
+                              'id': ride.id,
+                              'user': ride.user,
+                              'bike': {
+                                '_id': ride.bike.id,
+                                'bikeId': ride.bike.bikeId,
+                                'status': ride.bike.status,
+                              },
+                              'startLocation': ride.startLocation != null
+                                  ? {
+                                      'type': 'Point',
+                                      'coordinates': [
+                                        ride.startLocation!.lng,
+                                        ride.startLocation!.lat
+                                      ],
+                                    }
+                                  : null,
+                              'endLocation': ride.endLocation != null
+                                  ? {
+                                      'type': 'Point',
+                                      'coordinates': [
+                                        ride.endLocation!.lng,
+                                        ride.endLocation!.lat
+                                      ],
+                                    }
+                                  : null,
+                              'distance': ride.distance,
+                              'cost': ride.cost,
+                              'status': ride.status,
+                              'paymentStatus': ride.paymentStatus,
+                              'startTime': ride.startTime?.toIso8601String(),
+                              'endTime': ride.endTime?.toIso8601String(),
+                            },
+                          ),
                         ),
-                        onPressed: () {
-                          // TODO: Implement finish ride functionality for this specific ride (using ride.id)
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Finish ride for ID: ${ride.id}')),
-                          );
-                        },
-                        child: const Text("Finish Ride"),
-                      )
-                    : const Icon(FontAwesomeIcons.circleCheck,
-                        color: Colors.green, size: 24),
+                      );
+                    },
+                    child: const Text("Pay"),
+                  )
+                else
+                  const Icon(FontAwesomeIcons.circleCheck,
+                      color: Colors.green, size: 24),
               ],
             ),
             const SizedBox(height: 4),
@@ -156,7 +273,9 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                 style: TextStyle(
                     fontSize: 14,
                     color: isActive ? Colors.red : AppColors.primaryGreen)),
-            if (durationText.isNotEmpty || fareText.isNotEmpty || distanceText.isNotEmpty)
+            if (durationText.isNotEmpty ||
+                fareText.isNotEmpty ||
+                distanceText.isNotEmpty)
               Text("$durationText $fareText $distanceText",
                   style: const TextStyle(fontSize: 14, color: Colors.black54)),
             if (paymentStatusText.isNotEmpty)
@@ -224,13 +343,18 @@ class Ride {
       id: json['_id'] as String,
       user: json['user'] as String,
       bike: Bike.fromJson(json['bike'] as Map<String, dynamic>),
-      startLocation: parseGeoJsonPoint(json['startLocation'] as Map<String, dynamic>?),
-      endLocation: parseGeoJsonPoint(json['endLocation'] as Map<String, dynamic>?),
-      distance: (json['distance'] != null) ? (json['distance'] as num).toDouble() : null,
+      startLocation:
+          parseGeoJsonPoint(json['startLocation'] as Map<String, dynamic>?),
+      endLocation:
+          parseGeoJsonPoint(json['endLocation'] as Map<String, dynamic>?),
+      distance: (json['distance'] != null)
+          ? (json['distance'] as num).toDouble()
+          : null,
       cost: (json['cost'] != null) ? (json['cost'] as num).toDouble() : null,
       status: json['status'] as String,
       paymentStatus: json['paymentStatus'] as String? ?? '',
-      startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : null,
+      startTime:
+          json['startTime'] != null ? DateTime.parse(json['startTime']) : null,
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
     );
   }

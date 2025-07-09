@@ -15,6 +15,7 @@ class ChapaService {
   /// Initializes a Chapa payment with your backend.
   /// Your backend should then call Chapa's initialize endpoint and return a checkout URL.
   Future<String> initializePayment({
+    required String rideId,
     required String amount,
     required String currency,
     required String email,
@@ -33,7 +34,8 @@ class ChapaService {
         throw Exception('Authentication token not found. User not logged in.');
       }
 
-      final url = Uri.parse(ApiConstants.baseUrl + ApiConstants.chapaInitializePaymentEndpoint);
+      final url = Uri.parse(
+          '${ApiConstants.baseUrl}${ApiConstants.chapaInitiatePaymentEndpoint}/$rideId');
       final response = await client.post(
         url,
         headers: {
@@ -58,7 +60,8 @@ class ChapaService {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseData['status'] == 'success' && responseData['data'] != null) {
+        if (responseData['status'] == 'success' &&
+            responseData['data'] != null) {
           final String checkoutUrl = responseData['data']['checkout_url'];
           if (checkoutUrl.isNotEmpty) {
             return checkoutUrl;
@@ -66,10 +69,12 @@ class ChapaService {
             throw Exception('Checkout URL not found in response.');
           }
         } else {
-          throw Exception(responseData['message'] ?? 'Failed to initialize payment.');
+          throw Exception(
+              responseData['message'] ?? 'Failed to initialize payment.');
         }
       } else {
-        throw Exception(responseData['message'] ?? 'Backend error initializing payment: ${response.statusCode}');
+        throw Exception(responseData['message'] ??
+            'Backend error initializing payment: ${response.statusCode}');
       }
     } catch (e) {
       print('Error initializing Chapa payment: $e');
@@ -86,7 +91,8 @@ class ChapaService {
         throw Exception('Authentication token not found. User not logged in.');
       }
 
-      final url = Uri.parse('${ApiConstants.baseUrl}${ApiConstants.chapaVerifyPaymentEndpoint}/$txRef');
+      final url = Uri.parse(
+          '${ApiConstants.baseUrl}${ApiConstants.chapaVerifyPaymentEndpoint}/$txRef');
       final response = await client.get(
         url,
         headers: {
@@ -104,7 +110,8 @@ class ChapaService {
           return {'status': 'failed', 'message': responseData['message']};
         }
       } else {
-        throw Exception(responseData['message'] ?? 'Backend error verifying payment: ${response.statusCode}');
+        throw Exception(responseData['message'] ??
+            'Backend error verifying payment: ${response.statusCode}');
       }
     } catch (e) {
       print('Error verifying Chapa payment: $e');

@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:revobike/api/chapa_service.dart';
 import 'package:revobike/api/auth_service.dart';
+import 'package:revobike/api/ride_service.dart';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/booking/paymentFeedbackScreen.dart'; // NEW: Import feedback screen
 
@@ -20,6 +21,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? _paymentErrorMessage;
   final ChapaService _chapaService = ChapaService();
   final AuthService _authService = AuthService();
+  final RideService _rideService = RideService(authService: AuthService());
 
   @override
   void initState() {
@@ -42,14 +44,38 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('User information missing for payment.');
       }
 
-      final String amount =
-          (widget.rideDetails['totalCost'] as num? ?? 0.0).toStringAsFixed(2);
+      final double totalCostDouble =
+          (widget.rideDetails['totalCost'] as num? ?? 0.0).toDouble();
+
+      // Handle 0 birr payment case: directly show success feedback
+      if (totalCostDouble <= 0) {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentFeedbackScreen(
+                isSuccess: true,
+                rideDetails: widget.rideDetails,
+              ),
+            ),
+          );
+        }
+        return;
+      }
+
+      final String amount = totalCostDouble.toStringAsFixed(2);
       const String currency = 'ETB'; // Ethiopian Birr, Chapa's primary currency
       final String txRef =
           'revobike-${const Uuid().v4()}'; // Generate a unique transaction reference
 
+      final String? rideId = widget.rideDetails['rideId'] as String?;
+      if (rideId == null) {
+        throw Exception('Ride ID is missing for payment initiation.');
+      }
+
       // Call your backend to initialize Chapa payment
       final String checkoutUrl = await _chapaService.initializePayment(
+        rideId: rideId,
         amount: amount,
         currency: currency,
         email: currentUser.email!,
@@ -62,7 +88,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         // This should point back to your Flutter app, possibly via a deep link.
         // For testing, you might use a simple success/failure URL on your backend.
         // IMPORTANT: Ensure this matches your backend's redirect URL exactly.
-        returnUrl: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef',
+        returnUrl:
+            'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef',
       );
 
       // Launch the Chapa checkout URL in a WebView
@@ -79,7 +106,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   MaterialPageRoute(
                     builder: (context) => PaymentFeedbackScreen(
                       isSuccess: success,
-                      rideDetails: widget.rideDetails, // Pass ride details to feedback screen
+                      rideDetails: widget
+                          .rideDetails, // Pass ride details to feedback screen
                     ),
                   ),
                 );
@@ -303,7 +331,8 @@ Page resource error:
   errorType: ${error.errorType}
   isForMainFrame: ${error.isForMainFrame}
           ''');
-            if (mounted && !_paymentHandled) { // Ensure not already handled
+            if (mounted && !_paymentHandled) {
+              // Ensure not already handled
               _paymentHandled = true;
               Navigator.of(context).pop(); // Pop the WebView
               widget.onPaymentComplete(false); // Notify failure
@@ -321,7 +350,8 @@ Page resource error:
             // from the initializePayment call.
             // For this example, we used: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef'
             // Ensure the domain and path are correct.
-            if (request.url.contains('revobike-web-3.onrender.com/payment-status') &&
+            if (request.url
+                    .contains('revobike-web-3.onrender.com/payment-status') &&
                 request.url.contains('tx_ref=${widget.txRef}')) {
               // This is a potential callback URL. Now verify the payment with your backend.
               _verifyPaymentStatus(request.url);
@@ -370,6 +400,21 @@ Page resource error:
         if (verificationResult['status'] == 'success') {
           _paymentHandled = true;
           widget.onPaymentComplete(true);
+          // Update ride payment status in backend
+          try {
+            final rideService = RideService(authService: AuthService());
+            final Map<String, dynamic>? rideDetailsMap =
+                (widget as dynamic).rideDetails;
+            final String? rideId = rideDetailsMap != null
+                ? rideDetailsMap['rideId'] as String?
+                : null;
+            if (rideId != null) {
+              await rideService.updatePaymentStatus(
+                  rideId: rideId, status: 'complete');
+            }
+          } catch (e) {
+            print('Error updating ride payment status: $e');
+          }
         } else {
           _paymentHandled = true;
           widget.onPaymentComplete(false);
@@ -401,7 +446,8 @@ Page resource error:
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
-            if (mounted && !_paymentHandled) { // Only allow closing if not already handled
+            if (mounted && !_paymentHandled) {
+              // Only allow closing if not already handled
               _paymentHandled = true; // Mark as handled (cancelled)
               widget.onPaymentComplete(false); // Consider this a cancellation
               Navigator.of(context).pop();

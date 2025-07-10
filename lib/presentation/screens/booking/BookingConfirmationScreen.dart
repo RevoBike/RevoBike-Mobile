@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
 import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
+import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
 import 'package:revobike/api/ride_service.dart'; // Import the RideService
 import 'dart:async';
 import 'package:revobike/api/auth_service.dart';
@@ -31,7 +32,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   String? _rideStartError;
 
   Timer? _countdownTimer;
-  int _countdownSeconds = 300; // 5 minutes
+  int _countdownSeconds =
+      30; // 30 seconds countdown for demo, replace with real geofence later
 
   @override
   void initState() {
@@ -60,20 +62,42 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
       if (mounted) {
         setState(() {
-          _rideId = rideResponse['id']
-              as String; // Assuming your backend returns 'id' for the new ride
+          _rideId = rideResponse['_id']
+              as String; // Use '_id' as per backend response for the new ride
           _isLoadingRideStart = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _rideStartError = e.toString();
-          _isLoadingRideStart = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start ride: $e')),
-        );
+        String errorMessage = e.toString();
+        if (errorMessage.contains('unpaid ride')) {
+          // Show dialog to inform user and redirect to payment screen
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Unpaid Ride Detected'),
+              content: const Text(
+                  'You have an unpaid ride. Please complete the payment first.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushReplacementNamed(context, '/payment');
+                  },
+                  child: const Text('Go to Payment'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          setState(() {
+            _rideStartError = errorMessage;
+            _isLoadingRideStart = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to start ride: $errorMessage')),
+          );
+        }
       }
     }
   }
@@ -105,6 +129,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           rideId: _rideId!, // Ensure _rideId is not null before navigating
           bikeId: widget.selectedBikeId,
         ),
+      ),
+    );
+  }
+
+  void _navigateToPaymentScreen(Map<String, dynamic> rideDetails) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(rideDetails: rideDetails),
       ),
     );
   }

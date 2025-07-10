@@ -54,6 +54,9 @@ class RideService {
     double? initialLatitude,
     double? initialLongitude,
   }) async {
+    if (bikeId.isEmpty) {
+      throw Exception('Bike ID must be a non-empty string.');
+    }
     try {
       // Construct the full URL using base URL and the start ride endpoint,
       // appending the bikeId directly to the path as per your API spec.
@@ -166,15 +169,23 @@ class RideService {
       print(
           'End Ride response: ${response.statusCode} - ${response.body}'); // Log full response
 
-      final responseData = jsonDecode(response.body); // Decode JSON response
+      // Try to decode JSON response safely
+      Map<String, dynamic>? responseData;
+      try {
+        responseData = jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (jsonError) {
+        print('Failed to parse end ride response as JSON: $jsonError');
+        throw Exception(
+            'Invalid response format from server when ending ride.');
+      }
 
       // Check for successful HTTP status code (2xx range)
       if (response.statusCode >= 200 && response.statusCode < 300) {
         // Return the entire response data as the ride details object (no 'success' field expected)
-        return responseData as Map<String, dynamic>;
+        return responseData;
       } else {
         // For non-2xx status codes, extract backend's error message or provide a generic one
-        final message = responseData['message'] ?? 'Failed to end ride';
+        final message = responseData?['message'] ?? 'Failed to end ride';
         throw Exception(message);
       }
     } catch (e) {

@@ -5,8 +5,8 @@ import 'package:revobike/presentation/screens/booking/PaymentScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import RideService
 import 'dart:async'; // For Timer and Future.delayed if needed for UI, but main logic is API
 import 'package:revobike/api/auth_service.dart';
-// import 'package:google_maps_flutter/google_maps_flutter.dart'; // Uncomment if adding map
-// import 'package:location/location.dart' as loc_lib; // Uncomment if adding map
+import 'package:location/location.dart' as loc_lib; // Uncomment if adding map
+import 'dart:math'; // For math functions like sin, cos, sqrt, atan2
 
 class RideInProgressScreen extends StatefulWidget {
   final String rideId;
@@ -30,24 +30,31 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
   bool _isEndingRide = false;
   String? _rideEndError;
 
-  // Placeholder for map-related state, if you decide to add live tracking later
-  // LatLng _currentLocation = const LatLng(0, 0); // User's live location
-  // bool _isNearStation = false; // Flag to enable 'End Ride' button
-  // loc_lib.Location _location = loc_lib.Location();
-  // StreamSubscription<loc_lib.LocationData>? _locationSubscription;
+// Placeholder for map-related state, if you decide to add live tracking later
+// LatLng _currentLocation = const LatLng(0, 0); // User's live location
+// bool _isNearStation = false; // Flag to enable 'End Ride' button
+  loc_lib.Location _location = loc_lib.Location();
+  StreamSubscription<loc_lib.LocationData>? _locationSubscription;
 
-  // For demonstration, let's make _isNearStation true after a delay
-  // In a real app, this would be based on actual geofencing/proximity logic
+// For demonstration, let's make _isNearStation true after a delay
+// In a real app, this would be based on actual geofencing/proximity logic
   bool _isNearStationPlaceholder = false;
   Timer? _enableEndRideTimer;
+
+  double _distanceTravelled = 0.0;
+  loc_lib.LocationData? _lastLocation;
 
   @override
   void initState() {
     super.initState();
     _statusMessage = 'Your ride with bike ${widget.bikeId} has started.';
+    _distanceTravelled = 0.0;
 
-    // Simulate being near a station to enable the end ride button after a few seconds
-    _enableEndRideTimer = Timer(const Duration(seconds: 10), () {
+    // Start listening to location updates
+    _startLocationUpdates();
+
+    // For demo: simulate being near a station after 30 seconds instead of 10
+    _enableEndRideTimer = Timer(const Duration(seconds: 30), () {
       if (mounted) {
         setState(() {
           _isNearStationPlaceholder = true;
@@ -55,33 +62,63 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
         });
       }
     });
+  }
 
-    // If you integrate live location tracking:
-    // _startLocationUpdates();
+  void _startLocationUpdates() {
+    _locationSubscription = _location.onLocationChanged
+        .listen((loc_lib.LocationData currentLocationData) {
+      if (mounted &&
+          currentLocationData.latitude != null &&
+          currentLocationData.longitude != null) {
+        setState(() {
+          if (_lastLocation != null) {
+            _distanceTravelled += _calculateDistance(
+              _lastLocation!.latitude!,
+              _lastLocation!.longitude!,
+              currentLocationData.latitude!,
+              currentLocationData.longitude!,
+            );
+          }
+          _lastLocation = currentLocationData;
+          _statusMessage =
+              'Ride started. Distance travelled: ${_distanceTravelled.toStringAsFixed(2)} meters';
+        });
+      }
+    });
+  }
+
+  double _calculateDistance(
+      double lat1, double lon1, double lat2, double lon2) {
+    const double earthRadius = 6371000; // meters
+    double dLat = _degreesToRadians(lat2 - lat1);
+    double dLon = _degreesToRadians(lon2 - lon1);
+
+    double a = (sin(dLat / 2) * sin(dLat / 2)) +
+        cos(_degreesToRadians(lat1)) *
+            cos(_degreesToRadians(lat2)) *
+            (sin(dLon / 2) * sin(dLon / 2));
+    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    double distance = earthRadius * c;
+    return distance;
+  }
+
+  double _degreesToRadians(double degrees) {
+    return degrees * (3.141592653589793 / 180);
   }
 
   @override
   void dispose() {
     _enableEndRideTimer?.cancel();
-    // _locationSubscription?.cancel(); // Uncomment if using location updates
+    _locationSubscription?.cancel();
     super.dispose();
   }
 
-  // Example for real-time location updates (uncomment and integrate if needed)
-  /*
-  void _startLocationUpdates() {
-    _locationSubscription = _location.onLocationChanged.listen((loc_lib.LocationData currentLocationData) {
-      if (mounted && currentLocationData.latitude != null && currentLocationData.longitude != null) {
-        setState(() {
-          _currentLocation = LatLng(currentLocationData.latitude!, currentLocationData.longitude!);
-          // TODO: Implement logic to check if _currentLocation is near a valid end station
-          // For now, _isNearStationPlaceholder handles the button activation
-          // _isNearStation = checkProximityToStation(_currentLocation);
-        });
-      }
-    });
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
-  */
 
   void _endRide() async {
     setState(() {
@@ -91,11 +128,6 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
     });
 
     try {
-      // In a real app, get the actual current location
-      // For now, use a dummy final location
-      // final loc_lib.LocationData finalLocation = await _location.getLocation();
-      // double finalLatitude = finalLocation.latitude ?? 0.0;
-      // double finalLongitude = finalLocation.longitude ?? 0.0;
       double finalLatitude = 8.883137025013506; // Dummy end location latitude
       double finalLongitude = 38.80912475266776; // Dummy end location longitude
 
@@ -109,6 +141,7 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Ride ended successfully!')),
         );
+        // Navigate to PaymentScreen with ride details
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

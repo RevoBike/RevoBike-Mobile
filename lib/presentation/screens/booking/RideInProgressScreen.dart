@@ -128,13 +128,8 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
     });
 
     try {
-      double finalLatitude = 8.883137025013506; // Dummy end location latitude
-      double finalLongitude = 38.80912475266776; // Dummy end location longitude
-
       final Map<String, dynamic> rideDetails = await _rideService.endRide(
         rideId: widget.rideId,
-        finalLatitude: finalLatitude,
-        finalLongitude: finalLongitude,
       );
 
       if (mounted) {

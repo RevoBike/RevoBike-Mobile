@@ -142,9 +142,6 @@ class RideService {
   /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<Map<String, dynamic>> endRide({
     required String rideId,
-    required double finalLatitude,
-    required double finalLongitude,
-    // You can add more parameters here if your backend expects them (e.g., endTime)
   }) async {
     try {
       // Construct the full URL using base URL, end ride endpoint, and the rideId in the path.
@@ -152,18 +149,10 @@ class RideService {
           '${ApiConstants.baseUrl}${ApiConstants.endRideEndpoint}/$rideId');
       final headers = await _getAuthHeaders(); // Get authenticated headers
 
-      // Create the request body with final location data
-      final body = {
-        'finalLatitude': finalLatitude,
-        'finalLongitude': finalLongitude,
-        // Add other properties your backend expects for ending a ride (e.g., 'endTime': DateTime.now().toIso8601String())
-      };
-
-      // Make a POST request to end the ride
+      // Make a POST request to end the ride with no body as per backend spec
       final response = await _client.post(
         url,
         headers: headers,
-        body: jsonEncode(body), // Encode body to JSON
       );
 
       print(
@@ -181,8 +170,15 @@ class RideService {
 
       // Check for successful HTTP status code (2xx range)
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Return the entire response data as the ride details object (no 'success' field expected)
-        return responseData;
+        // Backend response: { success: true, data: ride }
+        if (responseData != null &&
+            responseData['success'] == true &&
+            responseData.containsKey('data')) {
+          return responseData['data'] as Map<String, dynamic>;
+        } else {
+          throw Exception(
+              'Invalid response format from server when ending ride.');
+        }
       } else {
         // For non-2xx status codes, extract backend's error message or provide a generic one
         final message = responseData?['message'] ?? 'Failed to end ride';

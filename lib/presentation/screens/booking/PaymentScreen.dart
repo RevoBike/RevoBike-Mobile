@@ -22,10 +22,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final AuthService _authService = AuthService();
 
   @override
-  void initState() {
-    super.initState();
-    // No need to initialize WebViewController here, it's done in _ChapaWebViewScreen
-  }
 
   // Chapa payment initiation logic
   void _payWithChapa() async {

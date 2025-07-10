@@ -186,11 +186,8 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                     ),
                     onPressed: () async {
                       try {
-                        final position = await _getCurrentLocation();
                         final endedRide = await _rideService.endRide(
                           rideId: ride.id,
-                          finalLatitude: position.latitude,
-                          finalLongitude: position.longitude,
                         );
                         // Navigate to PaymentScreen with endedRide details
                         if (!mounted) return;

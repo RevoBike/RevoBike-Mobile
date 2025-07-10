@@ -31,35 +31,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     try {
-      final UserModel? currentUser = await _authService.fetchUserProfile();
-      if (currentUser == null ||
-          currentUser.email == null ||
-          currentUser.name == null) {
-        throw Exception('User information missing for payment.');
+      final String? rideId = widget.rideDetails['rideId'] as String?;
+      if (rideId == null) {
+        throw Exception('Ride ID is missing for payment.');
       }
 
-      final String amount =
-          (widget.rideDetails['totalCost'] as num? ?? 0.0).toStringAsFixed(2);
-      const String currency = 'ETB'; // Ethiopian Birr, Chapa's primary currency
-      final String txRef =
-          'revobike-${const Uuid().v4()}'; // Generate a unique transaction reference
+      // Call your backend to initiate payment with rideId
+      final String checkoutUrl =
+          await _chapaService.initiatePayment(rideId: rideId);
 
-      // Call your backend to initialize Chapa payment
-      final String checkoutUrl = await _chapaService.initializePayment(
-        amount: amount,
-        currency: currency,
-        email: currentUser.email!,
-        firstName: currentUser.name!.split(' ').first,
-        lastName: currentUser.name!.split(' ').length > 1
-            ? currentUser.name!.split(' ').last
-            : 'User',
-        txRef: txRef,
-        // The returnUrl is where Chapa redirects the user's browser AFTER payment.
-        // This should point back to your Flutter app, possibly via a deep link.
-        // For testing, you might use a simple success/failure URL on your backend.
-        // IMPORTANT: Ensure this matches your backend's redirect URL exactly.
-        returnUrl: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef',
-      );
+      // Generate a txRef from the checkoutUrl or use a UUID if needed
+      final String txRef = Uri.parse(checkoutUrl).queryParameters['tx_ref'] ??
+          'revobike-${const Uuid().v4()}';
 
       // Launch the Chapa checkout URL in a WebView
       await Navigator.of(context).push(
@@ -75,7 +58,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   MaterialPageRoute(
                     builder: (context) => PaymentFeedbackScreen(
                       isSuccess: success,
-                      rideDetails: widget.rideDetails, // Pass ride details to feedback screen
+                      rideDetails: widget
+                          .rideDetails, // Pass ride details to feedback screen
                     ),
                   ),
                 );
@@ -244,12 +228,12 @@ class _ChapaWebViewScreen extends StatefulWidget {
   final ChapaService chapaService; // Pass ChapaService for verification
 
   const _ChapaWebViewScreen({
-    Key? key,
+    super.key,
     required this.checkoutUrl,
     required this.txRef,
     required this.onPaymentComplete,
     required this.chapaService,
-  }) : super(key: key);
+  });
 
   @override
   State<_ChapaWebViewScreen> createState() => _ChapaWebViewScreenState();
@@ -299,7 +283,8 @@ Page resource error:
   errorType: ${error.errorType}
   isForMainFrame: ${error.isForMainFrame}
           ''');
-            if (mounted && !_paymentHandled) { // Ensure not already handled
+            if (mounted && !_paymentHandled) {
+              // Ensure not already handled
               _paymentHandled = true;
               Navigator.of(context).pop(); // Pop the WebView
               widget.onPaymentComplete(false); // Notify failure
@@ -317,7 +302,8 @@ Page resource error:
             // from the initializePayment call.
             // For this example, we used: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef'
             // Ensure the domain and path are correct.
-            if (request.url.contains('revobike-web-3.onrender.com/payment-status') &&
+            if (request.url
+                    .contains('revobike-web-3.onrender.com/payment-status') &&
                 request.url.contains('tx_ref=${widget.txRef}')) {
               // This is a potential callback URL. Now verify the payment with your backend.
               _verifyPaymentStatus(request.url);
@@ -397,7 +383,8 @@ Page resource error:
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
-            if (mounted && !_paymentHandled) { // Only allow closing if not already handled
+            if (mounted && !_paymentHandled) {
+              // Only allow closing if not already handled
               _paymentHandled = true; // Mark as handled (cancelled)
               widget.onPaymentComplete(false); // Consider this a cancellation
               Navigator.of(context).pop();

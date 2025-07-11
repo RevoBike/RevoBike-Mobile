@@ -110,7 +110,7 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                 const SizedBox(height: 16),
                 _sectionTitle("Ride History"), // Unified title for all trips
                 // Dynamically generate _rideCard widgets for each fetched ride
-                ...rides.map((ride) => _rideCard(ride)).toList(),
+                ...rides.map((ride) => _rideCard(ride)),
                 const SizedBox(height: 64),
               ],
             ),
@@ -222,6 +222,7 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                         MaterialPageRoute(
                           builder: (context) => PaymentScreen(
                             rideDetails: {
+                              'rideId': ride.id, // Added rideId key
                               'id': ride.id,
                               'user': ride.user,
                               'bike': {

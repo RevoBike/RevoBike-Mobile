@@ -82,7 +82,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Navigator.pushReplacementNamed(context, '/payment');
+                    // Pass rideDetails with rideId to PaymentScreen
+                    if (_rideId != null) {
+                      final rideDetails = {
+                        'rideId': _rideId,
+                        'bikeId': widget.selectedBikeId,
+                        // Add other details if needed
+                      };
+                      _navigateToPaymentScreen(rideDetails);
+                    } else {
+                      // Fallback to named route if rideId is null
+                      Navigator.pushReplacementNamed(context, '/payment');
+                    }
                   },
                   child: const Text('Go to Payment'),
                 ),

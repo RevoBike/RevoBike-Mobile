@@ -36,6 +36,9 @@ class ChapaService {
         },
       );
 
+      print('Payment initiation response status: ${response.statusCode}');
+      print('Payment initiation response body: ${response.body}');
+
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 && responseData['success'] == true) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:revobike/constants/app_colors.dart';
 import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
 
 class PaymentPopup extends StatelessWidget {

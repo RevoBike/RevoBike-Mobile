@@ -32,6 +32,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     try {
       final String? rideId = widget.rideDetails['rideId'] as String?;
+      print('Initiating payment with rideId: \$rideId'); // Debug print
       if (rideId == null) {
         throw Exception('Ride ID is missing for payment.');
       }

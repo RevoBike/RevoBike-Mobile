@@ -142,35 +142,47 @@ class RideService {
   /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<Map<String, dynamic>> endRide({
     required String rideId,
+    double? finalLatitude,
+    double? finalLongitude,
   }) async {
     try {
-      // Construct the full URL using base URL, end ride endpoint, and the rideId in the path.
       final url = Uri.parse(
           '${ApiConstants.baseUrl}${ApiConstants.endRideEndpoint}/$rideId');
-      final headers = await _getAuthHeaders(); // Get authenticated headers
+      final headers = await _getAuthHeaders();
 
-      // Make a POST request to end the ride with no body as per backend spec
+      Map<String, dynamic>? requestBody;
+      if (finalLatitude != null && finalLongitude != null) {
+        requestBody = {
+          'destination': {
+            'type': 'Point',
+            'coordinates': [finalLongitude, finalLatitude],
+          }
+        };
+      }
+
       final response = await _client.post(
         url,
         headers: headers,
+        body: requestBody != null ? jsonEncode(requestBody) : null,
       );
 
-      print(
-          'End Ride response: ${response.statusCode} - ${response.body}'); // Log full response
+      print('End Ride response: ${response.statusCode} - ${response.body}');
 
-      // Try to decode JSON response safely
       Map<String, dynamic>? responseData;
       try {
         responseData = jsonDecode(response.body) as Map<String, dynamic>;
       } catch (jsonError) {
         print('Failed to parse end ride response as JSON: $jsonError');
-        throw Exception(
-            'Invalid response format from server when ending ride.');
+        if (response.statusCode >= 400) {
+          throw Exception(
+              'Server returned an error: HTTP ${response.statusCode}. Please try again later.');
+        } else {
+          throw Exception(
+              'Invalid response format from server when ending ride.');
+        }
       }
 
-      // Check for successful HTTP status code (2xx range)
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // Backend response: { success: true, data: ride }
         if (responseData != null &&
             responseData['success'] == true &&
             responseData.containsKey('data')) {
@@ -180,14 +192,12 @@ class RideService {
               'Invalid response format from server when ending ride.');
         }
       } else {
-        // For non-2xx status codes, extract backend's error message or provide a generic one
         final message = responseData?['message'] ?? 'Failed to end ride';
         throw Exception(message);
       }
     } catch (e) {
-      // Catch any network or parsing errors and rethrow them after logging
       print('Error ending ride: $e');
-      rethrow; // Re-throw to propagate the error up the call stack
+      rethrow;
     }
   }
 

@@ -33,7 +33,7 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
 // Placeholder for map-related state, if you decide to add live tracking later
 // LatLng _currentLocation = const LatLng(0, 0); // User's live location
 // bool _isNearStation = false; // Flag to enable 'End Ride' button
-  loc_lib.Location _location = loc_lib.Location();
+  final loc_lib.Location _location = loc_lib.Location();
   StreamSubscription<loc_lib.LocationData>? _locationSubscription;
 
 // For demonstration, let's make _isNearStation true after a delay
@@ -130,6 +130,8 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
     try {
       final Map<String, dynamic> rideDetails = await _rideService.endRide(
         rideId: widget.rideId,
+        finalLatitude: _lastLocation?.latitude,
+        finalLongitude: _lastLocation?.longitude,
       );
 
       if (mounted) {

@@ -6,7 +6,6 @@ import 'dart:convert';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/api/api_constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService {

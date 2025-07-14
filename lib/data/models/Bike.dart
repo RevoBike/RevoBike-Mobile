@@ -7,7 +7,7 @@ class BikeModel extends Equatable {
   final double? maxRangeKm; // Max range a new, full-battery bike can travel
   final String status;
 
-  BikeModel({
+  const BikeModel({
     required this.bikeId,
     this.batteryLevel,
     this.model,

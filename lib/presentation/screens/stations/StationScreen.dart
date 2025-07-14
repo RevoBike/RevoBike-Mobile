@@ -332,10 +332,10 @@ class _StationScreenState extends State<StationScreen> {
                                   ),
                                 ),
                                 Icon(
-                                  station.status?.toLowerCase() == "open"
+                                  station.status.toLowerCase() == "open"
                                       ? Icons.check_circle_outline
                                       : Icons.cancel_outlined,
-                                  color: station.status?.toLowerCase() == "open"
+                                  color: station.status.toLowerCase() == "open"
                                       ? Colors.green
                                       : Colors.red,
                                   size: 18,

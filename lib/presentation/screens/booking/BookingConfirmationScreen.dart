@@ -60,6 +60,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       final Map<String, dynamic> rideResponse =
           await _rideService.startRide(bikeId: widget.selectedBikeId);
 
+      print('Ride start API response: \$rideResponse'); // Debug print
+
       if (mounted) {
         setState(() {
           _rideId = rideResponse['_id']

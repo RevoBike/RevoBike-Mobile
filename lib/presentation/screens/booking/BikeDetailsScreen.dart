@@ -30,15 +30,15 @@ class BikeDetailsScreen extends StatefulWidget {
 }
 
 class _BikeDetailsScreenState extends State<BikeDetailsScreen> {
-  Completer<GoogleMapController> _controller = Completer();
+  final Completer<GoogleMapController> _controller = Completer();
 
   static const double _defaultZoom = 14.0;
 
   late LatLng _startLatLng;
   late LatLng _endLatLng;
 
-  Set<Marker> _markers = {};
-  Set<Polyline> _polylines = {};
+  final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
   List<LatLng> polylineCoordinates = [];
 
   final String _googleApiKey = 'YOUR_GOOGLE_MAPS_API_KEY'; // Replace or use existing key management

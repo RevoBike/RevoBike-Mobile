@@ -91,8 +91,9 @@ class Station extends Equatable {
           .toList(), // Convert BikeModel list to JSON
       'status': status,
     };
-    if (address != null)
+    if (address != null) {
       data['address'] = address; // Include address if not null
+    }
     if (rate != null) data['rate'] = rate; // Include rate if not null
     return data;
   }

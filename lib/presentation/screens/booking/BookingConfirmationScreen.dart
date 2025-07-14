@@ -7,6 +7,7 @@ import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Im
 import 'package:revobike/api/ride_service.dart'; // Import the RideService
 import 'dart:async';
 import 'package:revobike/api/auth_service.dart';
+import 'package:revobike/presentation/screens/recent/RecentScreen.dart'; // Import RecentTripsScreen
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Station station;
@@ -84,18 +85,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    // Pass rideDetails with rideId to PaymentScreen
-                    if (_rideId != null) {
-                      final rideDetails = {
-                        'rideId': _rideId,
-                        'bikeId': widget.selectedBikeId,
-                        // Add other details if needed
-                      };
-                      _navigateToPaymentScreen(rideDetails);
-                    } else {
-                      // Fallback to named route if rideId is null
-                      Navigator.pushReplacementNamed(context, '/payment');
-                    }
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RecentTripsScreen(),
+                      ),
+                    );
                   },
                   child: const Text('Go to Payment'),
                 ),

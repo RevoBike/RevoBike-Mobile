@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:revobike/constants/app_colors.dart';
-import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:revobike/constants/app_colors.dart';
 import 'package:revobike/api/ride_service.dart'; // Import your RideService
 import 'package:revobike/api/auth_service.dart'; // Import your AuthService
 import 'package:geolocator/geolocator.dart'; // Import geolocator for location
@@ -172,9 +169,22 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(locationText,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ride ID: ${ride.id}',
+                        style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black54),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(locationText,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                 ),
                 if (isActive)
                   ElevatedButton(
@@ -254,6 +264,7 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                               'paymentStatus': ride.paymentStatus,
                               'startTime': ride.startTime?.toIso8601String(),
                               'endTime': ride.endTime?.toIso8601String(),
+                              '_id': ride.id, // Added ride id explicitly here
                             },
                           ),
                         ),

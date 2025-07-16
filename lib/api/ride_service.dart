@@ -183,8 +183,7 @@ class RideService {
       }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        if (responseData != null &&
-            responseData['success'] == true &&
+        if (responseData['success'] == true &&
             responseData.containsKey('data')) {
           return responseData['data'] as Map<String, dynamic>;
         } else {
@@ -192,7 +191,7 @@ class RideService {
               'Invalid response format from server when ending ride.');
         }
       } else {
-        final message = responseData?['message'] ?? 'Failed to end ride';
+        final message = responseData['message'] ?? 'Failed to end ride';
         throw Exception(message);
       }
     } catch (e) {

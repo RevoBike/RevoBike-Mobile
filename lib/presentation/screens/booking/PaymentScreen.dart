@@ -36,9 +36,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('Ride ID is missing for payment.');
       }
 
+      print('Initiating payment with rideId: $rideId');
+
       // Call your backend to initiate payment with rideId
       final String checkoutUrl =
           await _chapaService.initiatePayment(rideId: rideId);
+
+      print('Received checkoutUrl: $checkoutUrl');
 
       // Generate a txRef from the checkoutUrl or use a UUID if needed
       final String txRef = Uri.parse(checkoutUrl).queryParameters['tx_ref'] ??
@@ -70,6 +74,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       );
     } catch (e) {
+      print('Exception caught in _payWithChapa: $e');
       if (mounted) {
         setState(() {
           _paymentErrorMessage = 'Payment failed: ${e.toString()}';

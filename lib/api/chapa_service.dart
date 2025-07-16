@@ -1,13 +1,9 @@
-// lib/api/chapa_service.dart
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:revobike/api/api_constants.dart';
 import 'package:revobike/api/auth_service.dart'; // To get the auth token for authenticated requests
 
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:revobike/api/api_constants.dart';
-import 'package:revobike/api/auth_service.dart'; // To get the auth token for authenticated requests
+// To get the auth token for authenticated requests
 
 class ChapaService {
   final http.Client client;
@@ -28,6 +24,11 @@ class ChapaService {
 
       final url = Uri.parse(
           '${ApiConstants.baseUrl}${ApiConstants.paymentInitiateEndpoint}/$rideId');
+
+      print('Initiating payment POST request to: $url');
+      print(
+          'Request headers: {\'Content-Type\': \'application/json\', \'Authorization\': \'Bearer ${token.substring(0, 10)}...}\'');
+
       final response = await client.post(
         url,
         headers: {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
 import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
@@ -192,7 +193,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   child: _isLoadingRideStart
                       ? Column(
                           children: [
-                            Lottie.asset("assets/animations/bikee.json",
+                            SvgPicture.asset("assets/images/bike_parking.svg",
                                 width: 200, height: 200, fit: BoxFit.cover),
                             const SizedBox(height: 15),
                             const CircularProgressIndicator(),
@@ -224,8 +225,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             )
                           : Column(
                               children: [
-                                Lottie.asset("assets/animations/bikee.json",
-                                    width: 200, height: 200, fit: BoxFit.cover),
+                                SvgPicture.asset(
+                                    "assets/images/bike_parking.svg",
+                                    width: 200,
+                                    height: 200,
+                                    fit: BoxFit.cover),
                                 const SizedBox(height: 15),
                                 Text(widget.station.name,
                                     style: const TextStyle(

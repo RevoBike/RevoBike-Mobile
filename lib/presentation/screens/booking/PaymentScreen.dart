@@ -31,8 +31,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     try {
-      final String? rideId = widget.rideDetails['rideId'] as String?;
-      print('Initiating payment with rideId: \$rideId'); // Debug print
+      final String? rideId = widget.rideDetails['_id'] as String?;
       if (rideId == null) {
         throw Exception('Ride ID is missing for payment.');
       }
@@ -229,7 +228,6 @@ class _ChapaWebViewScreen extends StatefulWidget {
   final ChapaService chapaService; // Pass ChapaService for verification
 
   const _ChapaWebViewScreen({
-    super.key,
     required this.checkoutUrl,
     required this.txRef,
     required this.onPaymentComplete,

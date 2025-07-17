@@ -18,7 +18,8 @@ class RecentTripsScreen extends StatefulWidget {
   State<RecentTripsScreen> createState() => _RecentTripsScreenState();
 }
 
-class _RecentTripsScreenState extends State<RecentTripsScreen> {
+class _RecentTripsScreenState extends State<RecentTripsScreen>
+    with WidgetsBindingObserver {
   final AuthService _authService = AuthService();
   late final RideService _rideService;
 
@@ -27,8 +28,32 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _rideService = RideService(authService: _authService);
     _rideHistoryFuture = _fetchRideHistory(); // Start fetching data
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh ride history when app is resumed
+      setState(() {
+        _rideHistoryFuture = _fetchRideHistory();
+      });
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh ride history whenever the screen is opened/refocused
+    _rideHistoryFuture = _fetchRideHistory();
   }
 
   // Method to fetch ride history from the API
@@ -217,7 +242,8 @@ class _RecentTripsScreenState extends State<RecentTripsScreen> {
                     },
                     child: const Text("End Ride"),
                   )
-                else if (!isPaymentComplete)
+                else if (!(ride.status.toLowerCase() == 'paid' &&
+                    isPaymentComplete))
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,

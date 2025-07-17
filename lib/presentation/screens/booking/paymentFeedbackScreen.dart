@@ -33,7 +33,7 @@ class PaymentFeedbackScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                isSuccess ? "Payment Successful!" : "Payment Failed!",
+                isSuccess ? "payment complete, thank you" : "Payment Failed!",
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -64,15 +64,18 @@ class PaymentFeedbackScreen extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isSuccess ? Colors.white : Colors.red[700],
-                  foregroundColor: isSuccess ? AppColors.primaryGreen : Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  foregroundColor:
+                      isSuccess ? AppColors.primaryGreen : Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
-                  isSuccess ? "Go to Home" : "Try Again / Go to Home",
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  isSuccess ? "back to home" : "Try Again / Go to Home",
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],

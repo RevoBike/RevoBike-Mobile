@@ -242,8 +242,7 @@ class _RecentTripsScreenState extends State<RecentTripsScreen>
                     },
                     child: const Text("End Ride"),
                   )
-                else if (!(ride.status.toLowerCase() == 'paid' &&
-                    isPaymentComplete))
+                else if (ride.paymentStatus.toLowerCase() != 'paid')
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,

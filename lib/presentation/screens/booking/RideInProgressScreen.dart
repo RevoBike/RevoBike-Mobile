@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:revobike/presentation/screens/booking/PaymentScreen.dart';
 import 'package:revobike/api/ride_service.dart'; // Import RideService
 import 'dart:async'; // For Timer and Future.delayed if needed for UI, but main logic is API
 import 'package:revobike/api/auth_service.dart';
 import 'package:location/location.dart' as loc_lib; // Uncomment if adding map
 import 'dart:math'; // For math functions like sin, cos, sqrt, atan2
+import 'package:flutter_svg/flutter_svg.dart';
 
 class RideInProgressScreen extends StatefulWidget {
   final String rideId;
@@ -178,12 +178,12 @@ class _RideInProgressScreenState extends State<RideInProgressScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Lottie.asset(
-                "assets/animations/bike_ride.json", // Ensure this Lottie asset exists
+              SvgPicture.asset(
+                "assets/images/bike_parking.svg",
+                // Ensure this Lottie asset exists
                 width: 250,
                 height: 250,
                 fit: BoxFit.contain,
-                repeat: true, // Animation repeats indefinitely during ride
               ),
               const SizedBox(height: 30),
               Text(

@@ -5,6 +5,7 @@ import 'package:revobike/api/chapa_service.dart';
 import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/booking/paymentFeedbackScreen.dart'; // NEW: Import feedback screen
+import 'package:revobike/api/api_constants.dart'; // Import ApiConstants for baseUrl and endpoints
 
 class PaymentScreen extends StatefulWidget {
   final Map<String, dynamic> rideDetails;
@@ -306,10 +307,20 @@ Page resource error:
             // from the initializePayment call.
             // For this example, we used: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef'
             // Ensure the domain and path are correct.
-            if (request.url
-                    .contains('revobike-web-3.onrender.com/payment-status') &&
-                request.url.contains('tx_ref=${widget.txRef}')) {
+            final callbackUrlPrefix =
+                '${ApiConstants.baseUrl}${ApiConstants.paymentCallbackEndpoint}';
+            // Improved callback URL detection: check if URL contains callback prefix and tx_ref param robustly
+            Uri? uri;
+            try {
+              uri = Uri.parse(request.url);
+            } catch (e) {
+              print('Invalid URL parsing in onNavigationRequest: $e');
+            }
+            if (uri != null &&
+                uri.toString().startsWith(callbackUrlPrefix) &&
+                uri.queryParameters['tx_ref'] == widget.txRef) {
               // This is a potential callback URL. Now verify the payment with your backend.
+              print('Detected callback URL with tx_ref: ${widget.txRef}');
               _verifyPaymentStatus(request.url);
               return NavigationDecision
                   .prevent; // Prevent WebView from loading this URL further
@@ -317,14 +328,23 @@ Page resource error:
 
             // Fallback: You might also look for "success", "failure", "cancelled" in the URL
             // This is less reliable than verifying with your backend, but can be a quick indicator.
-            if (request.url.contains('success=true') && !_paymentHandled) {
+            if ((request.url.contains('success=true') ||
+                    request.url.contains('hello world') ||
+                    request.url.contains('payment_success') ||
+                    request.url.contains('payment_complete') ||
+                    request.url.contains('completed')) &&
+                !_paymentHandled) {
+              print('Detected success indicator in URL: ${request.url}');
               _paymentHandled = true; // Prevent double handling
               widget.onPaymentComplete(true);
               Navigator.of(context).pop();
               return NavigationDecision.prevent;
             } else if ((request.url.contains('status=failed') ||
-                    request.url.contains('status=cancelled')) &&
+                    request.url.contains('status=cancelled') ||
+                    request.url.contains('payment_failed') ||
+                    request.url.contains('payment_cancelled')) &&
                 !_paymentHandled) {
+              print('Detected failure indicator in URL: ${request.url}');
               _paymentHandled = true; // Prevent double handling
               widget.onPaymentComplete(false);
               Navigator.of(context).pop();

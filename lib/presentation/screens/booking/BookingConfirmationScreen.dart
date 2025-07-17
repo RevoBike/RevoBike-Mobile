@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:lottie/lottie.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';

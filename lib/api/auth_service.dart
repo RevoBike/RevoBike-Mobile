@@ -37,17 +37,14 @@ class AuthService {
     if (key == _onboardingSeenKey) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(key);
-      print('AuthService: DEBUG - Deleted onboarding_seen from SharedPreferences');
       return;
     }
 
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(key);
-      print('AuthService (Web): DEBUG - Deleted key: $key from SharedPreferences');
     } else {
       await _secureStorage.delete(key: key);
-      print('AuthService (Mobile): DEBUG - Deleted key: $key from SecureStorage');
     }
   }
 
@@ -56,10 +53,8 @@ class AuthService {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       token = prefs.getString(_tokenKey);
-      print('AuthService (Web): DEBUG - getAuthToken - Retrieved token: ${token != null ? "FOUND" : "NULL"}');
     } else {
       token = await _secureStorage.read(key: _tokenKey);
-      print('AuthService (Mobile): DEBUG - getAuthToken - Retrieved token: ${token != null ? "FOUND" : "NULL"}');
     }
     return token;
   }
@@ -69,10 +64,8 @@ class AuthService {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userProfileKey, userJson);
-      print('AuthService (Web): DEBUG - Saved user profile to SharedPreferences');
     } else {
       await _secureStorage.write(key: _userProfileKey, value: userJson);
-      print('AuthService (Mobile): DEBUG - Saved user profile to SecureStorage');
     }
   }
 
@@ -81,10 +74,8 @@ class AuthService {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       userJson = prefs.getString(_userProfileKey);
-      print('AuthService (Web): DEBUG - Loaded user profile from SharedPreferences: ${userJson != null}');
     } else {
       userJson = await _secureStorage.read(key: _userProfileKey);
-      print('AuthService (Mobile): DEBUG - Loaded user profile from SecureStorage: ${userJson != null}');
     }
     if (userJson != null) {
       return UserModel.fromJson(jsonDecode(userJson));
@@ -96,15 +87,12 @@ class AuthService {
   Future<void> setOnboardingSeen() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_onboardingSeenKey, 'true');
-    final String? verifiedSeen = prefs.getString(_onboardingSeenKey);
-    print('AuthService: DEBUG - setOnboardingSeen - Set $_onboardingSeenKey to "true". Verified read: "$verifiedSeen"');
   }
 
   // Method to check if onboarding has been seen - ALWAYS uses SharedPreferences
   Future<bool> hasSeenOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     String? seen = prefs.getString(_onboardingSeenKey);
-    print('AuthService: DEBUG - hasSeenOnboarding - Retrieved $_onboardingSeenKey: "$seen"');
     return seen == 'true';
   }
 
@@ -134,7 +122,6 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error registering user: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -158,7 +145,6 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error sending password reset link: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -187,7 +173,6 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error resetting password: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -214,16 +199,10 @@ class AuthService {
         if (kIsWeb) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString(_tokenKey, token);
-          print('AuthService (Web): DEBUG - Login - Saved token to SharedPreferences');
           // Verify immediate read after saving
-          final String? verifiedToken = prefs.getString(_tokenKey);
-          print('AuthService (Web): DEBUG - Login - Verified token read: ${verifiedToken != null ? "FOUND" : "NULL"}');
         } else {
           await _secureStorage.write(key: _tokenKey, value: token);
-          print('AuthService (Mobile): DEBUG - Login - Saved token to SecureStorage');
           // Verify immediate read after saving
-          final String? verifiedToken = await _secureStorage.read(key: _tokenKey);
-          print('AuthService (Mobile): DEBUG - Login - Verified token read: ${verifiedToken != null ? "FOUND" : "NULL"}');
         }
 
         final Map<String, dynamic>? userData = data['user'];
@@ -237,7 +216,6 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error logging in: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -279,7 +257,6 @@ class AuthService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error verifying OTP: $e'); // Keep error logs
       rethrow;
     }
   }
@@ -287,17 +264,16 @@ class AuthService {
   Future<void> logout() async {
     await _deleteKey(_tokenKey);
     await _deleteKey(_userProfileKey);
-    await _deleteKey(_onboardingSeenKey); // Ensure onboarding is reset on logout for testing
+    await _deleteKey(
+        _onboardingSeenKey); // Ensure onboarding is reset on logout for testing
   }
 
   Future<bool> get isAuthenticated async {
     String? token = await getAuthToken(); // Use the getter to log retrieval
     if (token == null) {
-      print('AuthService: DEBUG - isAuthenticated - Token is NULL.');
       return false;
     }
     bool expired = JwtDecoder.isExpired(token);
-    print('AuthService: DEBUG - isAuthenticated - Token found. Expired: $expired');
     return !expired;
   }
 }

@@ -25,10 +25,6 @@ class ChapaService {
       final url = Uri.parse(
           '${ApiConstants.baseUrl}${ApiConstants.paymentInitiateEndpoint}/$rideId');
 
-      print('Initiating payment POST request to: $url');
-      print(
-          'Request headers: {\'Content-Type\': \'application/json\', \'Authorization\': \'Bearer ${token.substring(0, 10)}...}\'');
-
       final response = await client.post(
         url,
         headers: {
@@ -36,9 +32,6 @@ class ChapaService {
           'Authorization': 'Bearer $token',
         },
       );
-
-      print('Payment initiation response status: ${response.statusCode}');
-      print('Payment initiation response body: ${response.body}');
 
       final responseData = jsonDecode(response.body);
 
@@ -54,7 +47,6 @@ class ChapaService {
             responseData['message'] ?? 'Failed to initiate payment.');
       }
     } catch (e) {
-      print('Error initiating payment: $e');
       rethrow;
     }
   }
@@ -99,7 +91,6 @@ class ChapaService {
         throw Exception('Unexpected response status: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error verifying payment: $e');
       rethrow;
     }
   }

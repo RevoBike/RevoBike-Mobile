@@ -41,7 +41,8 @@ class _BikeDetailsScreenState extends State<BikeDetailsScreen> {
   final Set<Polyline> _polylines = {};
   List<LatLng> polylineCoordinates = [];
 
-  final String _googleApiKey = 'YOUR_GOOGLE_MAPS_API_KEY'; // Replace or use existing key management
+  final String _googleApiKey =
+      'YOUR_GOOGLE_MAPS_API_KEY'; // Replace or use existing key management
 
   @override
   void initState() {
@@ -91,7 +92,10 @@ class _BikeDetailsScreenState extends State<BikeDetailsScreen> {
       }
     } else {
       // Handle error or show message
-      print('Failed to fetch directions: ${response.statusCode}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Failed to load route: ${response.reasonPhrase}')),
+      );
     }
   }
 

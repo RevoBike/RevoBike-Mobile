@@ -44,7 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _currentUser = user;
         });
       } else {
-        print('User authenticated but profile not found locally. Logging out.');
         await _authService.logout();
         if (mounted) {
           Navigator.of(context).pushReplacement(
@@ -53,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } catch (e) {
-      print('Error fetching user profile from storage: $e');
       setState(() {
         _errorMessage =
             'Failed to load user profile: ${e.toString().contains('Exception:') ? e.toString().split('Exception: ')[1] : e.toString()}';

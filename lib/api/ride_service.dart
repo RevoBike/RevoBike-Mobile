@@ -86,9 +86,6 @@ class RideService {
         body: jsonEncode(requestBody), // Encode the constructed body
       );
 
-      print(
-          'Start Ride response: ${response.statusCode} - ${response.body}'); // Log full response
-
       final dynamic responseData =
           jsonDecode(response.body); // Decode JSON response
 
@@ -107,14 +104,10 @@ class RideService {
                 "Invalid 'startRide' success response format: 'data' field is not an object.");
           }
         } else {
-          // If success status but 'data' key is missing or response is not a Map
           throw Exception(
               "Invalid 'startRide' success response format. Expected a map with 'data' key.");
         }
-        // --- END OF CRUCIAL MODIFICATION 2 ---
       } else {
-        // Handle non-2xx status codes (error responses from the server)
-        // Extract 'message' from the response if available, otherwise provide a generic one.
         final message = (responseData is Map<String, dynamic> &&
                 responseData.containsKey('message'))
             ? responseData['message']
@@ -122,24 +115,10 @@ class RideService {
         throw Exception(message);
       }
     } catch (e) {
-      // Catch any network or parsing errors and rethrow them after logging
-      print('Error starting ride: $e');
       rethrow; // Re-throw to propagate the error up the call stack
     }
   }
 
-  /// Ends a ride by sending the ride ID and final location to the backend.
-  ///
-  /// This method makes a POST request to the `/rides/end/{rideId}` endpoint.
-  /// It includes the final latitude and longitude in the request body.
-  /// It expects a response confirming ride end and potentially ride summary details
-  /// like total cost and distance.
-  ///
-  /// [rideId]: The unique identifier of the active ride to be ended.
-  /// [finalLatitude]: The latitude of the user's location when ending the ride.
-  /// [finalLongitude]: The longitude of the user's location when ending the ride.
-  /// Returns a [Future<Map<String, dynamic>>] containing details of the ended ride.
-  /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<Map<String, dynamic>> endRide({
     required String rideId,
     double? finalLatitude,
@@ -166,13 +145,10 @@ class RideService {
         body: requestBody != null ? jsonEncode(requestBody) : null,
       );
 
-      print('End Ride response: ${response.statusCode} - ${response.body}');
-
       Map<String, dynamic>? responseData;
       try {
         responseData = jsonDecode(response.body) as Map<String, dynamic>;
       } catch (jsonError) {
-        print('Failed to parse end ride response as JSON: $jsonError');
         if (response.statusCode >= 400) {
           throw Exception(
               'Server returned an error: HTTP ${response.statusCode}. Please try again later.');
@@ -195,16 +171,10 @@ class RideService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error ending ride: $e');
       rethrow;
     }
   }
 
-  /// Fetches the ride history for the authenticated user.
-  ///
-  /// Makes a GET request to the `/rides/history` endpoint.
-  /// Returns a [Future<List<Map<String, dynamic>>] representing the list of rides.
-  /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<List<Map<String, dynamic>>> getRideHistory() async {
     try {
       final url = Uri.parse(
@@ -212,9 +182,6 @@ class RideService {
       final headers = await _getAuthHeaders();
 
       final response = await _client.get(url, headers: headers);
-
-      print(
-          'Get Ride History response: ${response.statusCode} - ${response.body}');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final dynamic responseData =
@@ -258,7 +225,6 @@ class RideService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error fetching ride history: $e');
       rethrow; // Re-throw to propagate the error up
     }
   }

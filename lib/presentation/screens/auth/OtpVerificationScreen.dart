@@ -90,13 +90,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
       });
 
-      print('Verifying OTP for email: ${widget.email}');
-      // print('Using API URL: ${ApiConstants.baseUrl}');
-
       // Verify OTP with backend
       await authService.verifyOtp(widget.email, otp);
-
-      print('OTP verification successful');
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -112,8 +107,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
       );
     } catch (e) {
-      print('OTP verification failed: $e');
-
       String errorMessage = 'Failed to verify OTP';
       if (e.toString().contains('timeout')) {
         errorMessage =
@@ -148,9 +141,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         resendButtonChild = LoadingAnimationWidget.fallingDot(
             color: AppColors.primaryGreen, size: 20);
       });
-
-      // TODO: Implement OTP resend with backend
-      // await authService.resendOtp(widget.email);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

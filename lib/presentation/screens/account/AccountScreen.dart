@@ -43,7 +43,6 @@ class _AccountScreenState extends State<AccountScreen> {
           _isLoading = false;
         });
       }
-      print('Error fetching user profile in AccountScreen: $e');
     }
   }
 

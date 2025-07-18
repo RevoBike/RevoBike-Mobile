@@ -50,7 +50,6 @@ class _MapScreenState extends State<MapScreen> {
         _stations = fetchedStations;
       });
     } catch (e) {
-      print('Error fetching stations: $e');
       setState(() {
         _stationFetchError =
             'Failed to load stations: ${e.toString().contains('Exception:') ? e.toString().split('Exception: ')[1] : e.toString()}';
@@ -148,7 +147,6 @@ class _MapScreenState extends State<MapScreen> {
             });
           }
         } catch (e) {
-          print('Error getting placemark: $e');
           setState(() {
             // Fallback to AASTU specific name on geocoding error
             _currentLocationName =

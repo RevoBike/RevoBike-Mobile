@@ -73,10 +73,18 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           );
         }
       }
-    } catch (e, stackTrace) {
-      print('Error in _checkInitialFlow: $e');
-      print(stackTrace);
-      // Optionally show an error UI or fallback screen here
+    } catch (e) {
+      // Handle any errors that occur during the authentication check
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error checking authentication: $e')),
+        );
+        // Optionally, navigate to LoginScreen on error
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+      }
     }
   }
 

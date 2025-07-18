@@ -25,37 +25,47 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
   }
 
   Future<void> _checkInitialFlow() async {
-    // 1. Check if onboarding has been seen
-    final bool hasSeenOnboarding = await _authService.hasSeenOnboarding();
+    try {
+      // 1. Check if onboarding has been seen
+      final bool hasSeenOnboarding = await _authService.hasSeenOnboarding();
 
-    if (!hasSeenOnboarding) {
-      // First-time user, navigate to Onboarding Screen
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-        );
-      }
-      return; // Stop further checks
-    }
-
-    // 2. If onboarding has been seen, proceed with authentication check
-    bool isAuthenticated = await _authService.isAuthenticated;
-
-    if (isAuthenticated) {
-      final UserModel? user = await _authService.fetchUserProfile();
-
-      if (user != null) {
-        // Authenticated and profile found, go to HomeScreen
+      if (!hasSeenOnboarding) {
+        // First-time user, navigate to Onboarding Screen
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
           );
         }
+        return; // Stop further checks
+      }
+
+      // 2. If onboarding has been seen, proceed with authentication check
+      bool isAuthenticated = await _authService.isAuthenticated;
+
+      if (isAuthenticated) {
+        final UserModel? user = await _authService.fetchUserProfile();
+
+        if (user != null) {
+          // Authenticated and profile found, go to HomeScreen
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomeScreen()),
+            );
+          }
+        } else {
+          // Authenticated but no local user profile (corrupted storage?), force re-login
+          await _authService.logout();
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+            );
+          }
+        }
       } else {
-        // Authenticated but no local user profile (corrupted storage?), force re-login
-        await _authService.logout();
+        // Not authenticated, navigate to LoginScreen (onboarding already seen)
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -63,14 +73,10 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
           );
         }
       }
-    } else {
-      // Not authenticated, navigate to LoginScreen (onboarding already seen)
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-      }
+    } catch (e, stackTrace) {
+      print('Error in _checkInitialFlow: $e');
+      print(stackTrace);
+      // Optionally show an error UI or fallback screen here
     }
   }
 

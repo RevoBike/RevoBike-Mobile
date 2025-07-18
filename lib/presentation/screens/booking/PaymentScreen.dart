@@ -250,10 +250,6 @@ class _ChapaWebViewScreenState extends State<_ChapaWebViewScreen> {
   bool _isLoadingWebView = true;
   bool _paymentHandled = false; // Changed from _paymentSuccessHandled
 
-  Timer? _countdownTimer;
-  int _countdownTicks = 0;
-  static const int maxTicks = 2; // 2 batches of 30 seconds = 1 minute
-
   @override
   void initState() {
     super.initState();
@@ -365,7 +361,6 @@ Page resource error:
 
   @override
   void dispose() {
-    _countdownTimer?.cancel();
     super.dispose();
   }
 
@@ -387,10 +382,6 @@ Page resource error:
         if (verificationResult['status'] == 'success') {
           _paymentHandled = true;
           widget.onPaymentComplete(true);
-          _countdownTimer?.cancel();
-        } else {
-          // Start countdown to poll payment status if not successful yet
-          _startPaymentStatusCountdown();
         }
         Navigator.of(context).pop(); // Close WebView
       }
@@ -400,7 +391,6 @@ Page resource error:
         _paymentHandled = true;
         widget.onPaymentComplete(false);
         Navigator.of(context).pop(); // Close WebView even on error
-        _countdownTimer?.cancel();
       }
     } finally {
       if (mounted) {
@@ -409,40 +399,6 @@ Page resource error:
         });
       }
     }
-  }
-
-  void _startPaymentStatusCountdown() {
-    if (_countdownTimer != null) return; // Already running
-
-    _countdownTicks = 0;
-    _countdownTimer =
-        Timer.periodic(const Duration(seconds: 30), (timer) async {
-      _countdownTicks++;
-      print('Payment status countdown tick $_countdownTicks');
-
-      try {
-        final Map<String, dynamic> verificationResult =
-            await widget.chapaService.verifyPayment(widget.txRef);
-
-        if (!mounted) return;
-
-        if (verificationResult['status'] == 'success') {
-          _paymentHandled = true;
-          _countdownTimer?.cancel();
-          widget.onPaymentComplete(true);
-          Navigator.of(context).pop();
-        } else if (_countdownTicks >= maxTicks) {
-          // After 1 minute, if still not successful, navigate to RecentScreen
-          _countdownTimer?.cancel();
-          _paymentHandled = true;
-          Navigator.of(context).pop();
-          Navigator.pushReplacementNamed(context, '/recent');
-        }
-      } catch (e) {
-        print('Error during payment status countdown check: $e');
-        // Optionally handle errors or cancel timer
-      }
-    });
   }
 
   @override
@@ -458,7 +414,9 @@ Page resource error:
               // Only allow closing if not already handled
               _paymentHandled = true; // Mark as handled (cancelled)
               widget.onPaymentComplete(false); // Consider this a cancellation
-              Navigator.of(context).pop();
+              // Navigate to home screen instead of just popping
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil('/', (route) => false);
             }
           },
         ),

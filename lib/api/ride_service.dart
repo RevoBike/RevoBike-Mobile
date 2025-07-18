@@ -9,7 +9,6 @@ import 'package:revobike/api/api_constants.dart'; // Ensure this path is correct
 import 'package:revobike/api/auth_service.dart';
 
 class RideService {
-  final FlutterSecureStorage _storage;
   final http.Client _client;
   final AuthService _authService;
 
@@ -20,7 +19,6 @@ class RideService {
     FlutterSecureStorage? storage,
     http.Client? client,
   })  : _authService = authService,
-        _storage = storage ?? const FlutterSecureStorage(),
         _client = client ?? http.Client();
 
   // Helper method to retrieve the JWT token from AuthService
@@ -38,16 +36,6 @@ class RideService {
     };
   }
 
-  /// Starts a ride by sending the bike ID (in path and body) and optional initial location to the backend.
-  ///
-  /// This method makes a POST request to the `/rides/start/:bikeId` endpoint.
-  /// It expects a response containing `{ "success": true, "data": { ...ride details... } }`.
-  ///
-  /// [bikeId]: The unique identifier of the bike to be started. This is used in the URL path AND the request body.
-  /// [initialLatitude]: Optional. The latitude of the user's starting location.
-  /// [initialLongitude]: Optional. The longitude of the user's starting location.
-  /// Returns a [Future<Map<String, dynamic>>] containing the details of the started ride (the 'data' object).
-  /// Throws an [Exception] if the API call fails or the response is invalid.
   Future<Map<String, dynamic>> startRide({
     required String bikeId,
     // Keep these optional parameters as they might be sent from the UI
@@ -58,14 +46,10 @@ class RideService {
       throw Exception('Bike ID must be a non-empty string.');
     }
     try {
-      // Construct the full URL using base URL and the start ride endpoint,
-      // appending the bikeId directly to the path as per your API spec.
       final url = Uri.parse(
           '${ApiConstants.baseUrl}${ApiConstants.startRideEndpoint}/$bikeId');
       final headers = await _getAuthHeaders(); // Get authenticated headers
 
-      // --- CRUCIAL MODIFICATION 1: CONSTRUCTING THE REQUEST BODY ---
-      // The backend explicitly expects "bikeId" in the JSON body.
       final Map<String, dynamic> requestBody = {
         "bikeId": bikeId, // Required in body as per backend info
       };
@@ -78,7 +62,6 @@ class RideService {
         requestBody['initialLongitude'] =
             initialLongitude; // Ensure correct key name for backend
       }
-      // --- END OF CRUCIAL MODIFICATION 1 ---
 
       final response = await _client.post(
         url,

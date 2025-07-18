@@ -3,7 +3,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:revobike/data/models/Station.dart';
 import 'package:revobike/presentation/screens/booking/RideInProgressScreen.dart';
-import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
 import 'package:revobike/api/ride_service.dart'; // Import the RideService
 import 'dart:async';
 import 'package:revobike/api/auth_service.dart';
@@ -60,8 +59,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     try {
       final Map<String, dynamic> rideResponse =
           await _rideService.startRide(bikeId: widget.selectedBikeId);
-
-      print('Ride start API response: \$rideResponse'); // Debug print
 
       if (mounted) {
         setState(() {
@@ -137,15 +134,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           rideId: _rideId!, // Ensure _rideId is not null before navigating
           bikeId: widget.selectedBikeId,
         ),
-      ),
-    );
-  }
-
-  void _navigateToPaymentScreen(Map<String, dynamic> rideDetails) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentScreen(rideDetails: rideDetails),
       ),
     );
   }

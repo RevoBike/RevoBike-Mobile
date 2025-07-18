@@ -323,7 +323,7 @@ class _MapScreenState extends State<MapScreen> {
                                   content: Text(
                                     firstAvailableBikeId == null
                                         ? 'No bikes available at this station.'
-                                        : 'This station is currently ${station.status ?? 'closed'}.',
+                                        : 'This station is currently ${station.status}.',
                                   ),
                                 ),
                               );

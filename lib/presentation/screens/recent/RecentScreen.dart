@@ -3,13 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:revobike/constants/app_colors.dart';
 import 'package:revobike/api/ride_service.dart'; // Import your RideService
 import 'package:revobike/api/auth_service.dart'; // Import your AuthService
-import 'package:geolocator/geolocator.dart'; // Import geolocator for location
 import 'package:revobike/presentation/screens/booking/PaymentScreen.dart'; // Import PaymentScreen
-
-// If your Ride and Location models are in separate files like data/models/ride.dart
-// and data/models/location.dart, uncomment/add these imports:
-// import 'package:revobike/data/models/Ride.dart';
-// import 'package:revobike/data/models/Location.dart';
 
 class RecentTripsScreen extends StatefulWidget {
   const RecentTripsScreen({super.key});
@@ -69,36 +63,6 @@ class _RecentTripsScreenState extends State<RecentTripsScreen>
     }
   }
 
-  // Method to get current location using geolocator
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Check if location services are enabled
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception('Location services are disabled.');
-    }
-
-    // Check location permission status
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    // Get the current position
-    return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Ride>>(
@@ -153,7 +117,6 @@ class _RecentTripsScreenState extends State<RecentTripsScreen>
   // Updated _rideCard to accept a Ride object
   Widget _rideCard(Ride ride) {
     final isActive = ride.status.toLowerCase() == 'active';
-    final isPaymentComplete = ride.paymentStatus.toLowerCase() == 'complete';
 
     // Use the actual startLocation from the ride object
     final locationText = ride.startLocation != null

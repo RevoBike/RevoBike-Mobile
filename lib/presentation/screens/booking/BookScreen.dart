@@ -17,7 +17,6 @@ class _BookScreenState extends State<BookScreen> {
   LatLng? _destination;
   bool _isCalculating = false;
   double? _price;
-  late GoogleMapController _googleMapController;
   Location location = Location();
 
   void _onMapTap(LatLng position) {
@@ -77,7 +76,6 @@ class _BookScreenState extends State<BookScreen> {
             ),
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
-            onMapCreated: (controller) => _googleMapController = controller,
             onTap: _onMapTap,
             markers: {
               if (_start != null)
@@ -109,7 +107,7 @@ class _BookScreenState extends State<BookScreen> {
                     topRight: Radius.circular(16)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black,
                     blurRadius: 20,
                     offset: const Offset(0, -5),
                   ),

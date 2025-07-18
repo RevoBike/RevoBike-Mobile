@@ -5,7 +5,6 @@ import 'package:revobike/api/auth_service.dart';
 import 'package:revobike/presentation/screens/auth/LoginScreen.dart';
 import 'package:revobike/presentation/screens/auth/OtpVerificationScreen.dart';
 import 'package:revobike/constants/app_colors.dart';
-import 'package:revobike/api/api_constants.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -29,7 +28,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _passwordError;
   String? _universityIdError;
   String? _phoneNumberError;
-  String? _generalError;
 
   double _strength = 0.0;
 
@@ -98,7 +96,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _passwordError = null;
       _universityIdError = null;
       _phoneNumberError = null;
-      _generalError = null;
     });
 
     // Validate fields
@@ -171,13 +168,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             LoadingAnimationWidget.fallingDot(color: Colors.white, size: 20);
       });
 
-      print('Attempting to register user...');
-      print('Name: ${_nameController.text}');
-      print('Email: ${_emailController.text}');
-      print('University ID: ${_universityIdController.text}');
-      print('Phone Number: ${_phoneNumberController.text}');
-      print('API Base URL: ${ApiConstants.baseUrl}');
-
       // First register the user (this will trigger OTP sending)
       final response = await authService.register(
         _nameController.text,
@@ -187,11 +177,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _phoneNumberController.text,
       );
 
-      print('Backend response: $response');
+      if (!mounted) return;
 
       if (response['success'] == true) {
-        print('Registration successful, showing success message...');
-
         // Show success feedback before navigation
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -199,8 +187,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             backgroundColor: Colors.green,
           ),
         );
-
-        print('Navigating to OTP verification screen...');
 
         // Navigate to OTP verification screen
         Navigator.pushReplacement(
@@ -214,7 +200,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
         );
       } else {
-        print('Registration failed: ${response['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Registration failed: ${response['message']}'),
@@ -223,10 +208,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
         );
       }
     } catch (e) {
-      print('Error occurred: $e');
+      if (!mounted) return;
 
       setState(() {
-        _generalError = 'Failed to register. Please try again.';
         buttonChild = const Text(
           "Sign Up",
           style: TextStyle(

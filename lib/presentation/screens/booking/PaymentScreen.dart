@@ -366,12 +366,14 @@ class _ChapaWebViewScreenState extends State<_ChapaWebViewScreen> {
           icon: const Icon(Icons.close),
           onPressed: () {
             if (mounted && !_paymentHandled) {
-              // Only allow closing if not already handled
-              _paymentHandled = true; // Mark as handled (cancelled)
-              widget.onPaymentComplete(false); // Consider this a cancellation
-              // Navigate to home screen instead of just popping
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil('/', (route) => false);
+              _paymentHandled =
+                  true; // Mark as handled (cancelled or completed depending on context)
+              widget.onPaymentComplete(
+                  false); // Consider this a cancellation or final state
+
+              // CHANGE THIS LINE to navigate to your PaymentFeedbackScreen
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/paymentFeedback', (route) => false);
             }
           },
         ),

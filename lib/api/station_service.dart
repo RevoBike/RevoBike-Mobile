@@ -13,7 +13,6 @@ class StationService {
 
   Future<List<Station>> getStations() async {
     try {
-      print('Fetching stations...');
       // Use ApiConstants.baseUrl and ApiConstants.stationsEndpoint
       final url =
           Uri.parse(ApiConstants.baseUrl + ApiConstants.stationsEndpoint);
@@ -26,8 +25,6 @@ class StationService {
 
       final response = await client.get(url, headers: headers);
 
-      print('Stations response: ${response.body}');
-
       final data = jsonDecode(response.body);
       if (response.statusCode >= 200 &&
           response.statusCode < 300 &&
@@ -39,7 +36,6 @@ class StationService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error in getStations: $e');
       rethrow;
     }
   }
@@ -59,8 +55,6 @@ class StationService {
 
       final response = await client.get(url, headers: headers);
 
-      print('Station detail response for $stationId: ${response.body}');
-
       final data = jsonDecode(response.body);
       if (response.statusCode >= 200 &&
           response.statusCode < 300 &&
@@ -72,7 +66,6 @@ class StationService {
         throw Exception(message);
       }
     } catch (e) {
-      print('Error in getStationById: $e');
       rethrow;
     }
   }

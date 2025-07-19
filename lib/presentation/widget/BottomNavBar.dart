@@ -24,7 +24,7 @@ class CustomBottomNavBar extends StatelessWidget {
       splashColor: Colors.transparent,
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.1),
+          color: Colors.black,
           blurRadius: 10,
           offset: const Offset(0, 2),
         ),

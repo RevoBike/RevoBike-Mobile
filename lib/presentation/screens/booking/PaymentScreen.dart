@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:uuid/uuid.dart';
 import 'package:revobike/api/chapa_service.dart';
-import 'package:revobike/api/auth_service.dart';
-import 'package:revobike/data/models/User.dart';
 import 'package:revobike/presentation/screens/booking/paymentFeedbackScreen.dart'; // NEW: Import feedback screen
 import 'package:revobike/api/api_constants.dart'; // Import ApiConstants for baseUrl and endpoints
 
@@ -21,9 +18,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _isLoadingPayment = false;
   String? _paymentErrorMessage;
   final ChapaService _chapaService = ChapaService();
-  final AuthService _authService = AuthService();
-
-  @override
 
   // Chapa payment initiation logic
   void _payWithChapa() async {
@@ -38,13 +32,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw Exception('Ride ID is missing for payment.');
       }
 
-      print('Initiating payment with rideId: $rideId');
-
       // Call your backend to initiate payment with rideId
       final String checkoutUrl =
           await _chapaService.initiatePayment(rideId: rideId);
-
-      print('Received checkoutUrl: $checkoutUrl');
 
       // Generate a txRef from the checkoutUrl or use a UUID if needed
       final String txRef = Uri.parse(checkoutUrl).queryParameters['tx_ref'] ??
@@ -76,7 +66,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       );
     } catch (e) {
-      print('Exception caught in _payWithChapa: $e');
       if (mounted) {
         setState(() {
           _paymentErrorMessage = 'Payment failed: ${e.toString()}';
@@ -113,18 +102,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final DateTime startDt = DateTime.parse(startTime);
         formattedStartTime =
             '${startDt.hour}:${startDt.minute.toString().padLeft(2, '0')} ${startDt.day}/${startDt.month}';
-      } catch (e) {
-        print('Error parsing start time: $e');
-      }
+      } catch (e) {}
     }
     if (endTime != null) {
       try {
         final DateTime endDt = DateTime.parse(endTime);
         formattedEndTime =
             '${endDt.hour}:${endDt.minute.toString().padLeft(2, '0')} ${endDt.day}/${endDt.month}';
-      } catch (e) {
-        print('Error parsing end time: $e');
-      }
+      } catch (e) {}
     }
 
     return Scaffold(
@@ -270,25 +255,16 @@ class _ChapaWebViewScreenState extends State<_ChapaWebViewScreen> {
             }
           },
           onPageStarted: (String url) {
-            print('Page started loading: $url');
             setState(() {
               _isLoadingWebView = true;
             });
           },
           onPageFinished: (String url) {
-            print('Page finished loading: $url');
             setState(() {
               _isLoadingWebView = false;
             });
           },
           onWebResourceError: (WebResourceError error) {
-            print('''
-Page resource error:
-  code: ${error.errorCode}
-  description: ${error.description}
-  errorType: ${error.errorType}
-  isForMainFrame: ${error.isForMainFrame}
-          ''');
             if (mounted && !_paymentHandled) {
               // Ensure not already handled
               _paymentHandled = true;
@@ -297,45 +273,26 @@ Page resource error:
             }
           },
           onNavigationRequest: (NavigationRequest request) {
-            // This is crucial for handling redirects from Chapa.
-            // Chapa redirects to your return_url after payment.
-            // We'll check if the URL contains keywords for success/failure
-            // or if it matches your specified return_url.
-
-            print('Navigating to: ${request.url}');
-
-            // IMPORTANT: Adjust this URL to match your return_url EXACTLY
-            // from the initializePayment call.
-            // For this example, we used: 'https://revobike-web-3.onrender.com/payment-status?tx_ref=$txRef'
-            // Ensure the domain and path are correct.
             final callbackUrlPrefix =
                 '${ApiConstants.baseUrl}${ApiConstants.paymentCallbackEndpoint}';
             // Improved callback URL detection: check if URL contains callback prefix and tx_ref param robustly
             Uri? uri;
             try {
               uri = Uri.parse(request.url);
-            } catch (e) {
-              print('Invalid URL parsing in onNavigationRequest: $e');
-            }
+            } catch (e) {}
             if (uri != null &&
                 uri.toString().startsWith(callbackUrlPrefix) &&
                 uri.queryParameters['tx_ref'] == widget.txRef) {
-              // This is a potential callback URL. Now verify the payment with your backend.
-              print('Detected callback URL with tx_ref: ${widget.txRef}');
               _verifyPaymentStatus(request.url);
               return NavigationDecision
                   .prevent; // Prevent WebView from loading this URL further
             }
-
-            // Fallback: You might also look for "success", "failure", "cancelled" in the URL
-            // This is less reliable than verifying with your backend, but can be a quick indicator.
             if ((request.url.contains('success=true') ||
                     request.url.contains('hello world') ||
                     request.url.contains('payment_success') ||
                     request.url.contains('payment_complete') ||
                     request.url.contains('completed')) &&
                 !_paymentHandled) {
-              print('Detected success indicator in URL: ${request.url}');
               _paymentHandled = true; // Prevent double handling
               widget.onPaymentComplete(true);
               Navigator.of(context).pop();
@@ -345,7 +302,6 @@ Page resource error:
                     request.url.contains('payment_failed') ||
                     request.url.contains('payment_cancelled')) &&
                 !_paymentHandled) {
-              print('Detected failure indicator in URL: ${request.url}');
               _paymentHandled = true; // Prevent double handling
               widget.onPaymentComplete(false);
               Navigator.of(context).pop();
@@ -387,7 +343,6 @@ Page resource error:
       }
     } catch (e) {
       if (mounted) {
-        print('Payment verification error: $e');
         _paymentHandled = true;
         widget.onPaymentComplete(false);
         Navigator.of(context).pop(); // Close WebView even on error
